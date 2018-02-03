@@ -4,6 +4,9 @@ using OpenQA.Selenium.Chrome;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using Yandex.Direct.Configuration;
+using Yandex.Direct.Authentication;
+using Yandex.Direct;
 
 namespace KeywordGetherer
 {
@@ -14,25 +17,11 @@ namespace KeywordGetherer
 
         static void Main(string[] args)
         {
-            ////
-            //try
-            //{
-            //    YandexDirectConfiguration _ydc = new YandexDirectConfiguration();
-            //    _ydc.AuthProvider = new FileCertificateAuthProvider("d:\\client.pfx", "pass", "azyexxxar", "AQAAAAAhzCtcAASm9aZlZ6gwzUielkMitN3PEsc");
-            //    _ydc.Language = YandexApiLanguage.English;
-
-            //    _ydc.ServiceUrl = new Uri("https://soap.direct.yandex.ru/json-api/v4/");
-
-            //    YandexDirectService _yds = new YandexDirectService(_ydc);    
-            //    _yds.CreateNewForecast(new string[] { "окна" }, new int[] { 1 });
-            //}
-            //catch (Exception e)
-            //{
-            //    Console.WriteLine(e.Message);
-            //}
+            
+            //YandexDirect yandexDirect = new YandexDirect("azyexxxar", "906fe2dd055a4f6fa08b0765156e6cf7", "AQAAAAAhzCtcAASm9aZlZ6gwzUielkMitN3PEsc");
+            //yandexDirect.execute(new string[] { "холод" }, new int[] { 1 });
             //Console.ReadLine();
-            ////var settings = new YapiSettings("C:\\cert.pfx", "password") { Language = YapiLanguage.English };
-            ////var service = new YapiService(setting);
+         
 
             //return;
             foreach (string file in Directory.GetFiles(Directory.GetCurrentDirectory()))
@@ -100,7 +89,10 @@ namespace KeywordGetherer
 
                     driver.Navigate().GoToUrl("http://www.bukvarix.com/keywords/?q=" + kw.keyword + "&r=report");
                     if (!driver.isSelectorExist(By.CssSelector(".report-download-button")))
+                    {
+                        driver.Close();
                         continue;
+                    }
 
                     IWebElement element = driver.FindElement(By.CssSelector(".report-download-button"));
                     string fileName = element.GetAttribute("download");
@@ -127,7 +119,6 @@ namespace KeywordGetherer
 
                             if (int.Parse(buf[1]) <= 7 && int.Parse(buf[4]) <= 100)
                             {
-
                                 try
                                 {
                                     if (db.isKeywordExist(keyword) == -1)

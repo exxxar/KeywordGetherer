@@ -3,16 +3,19 @@ using MySql.Data.MySqlClient;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Text.RegularExpressions;
-
+using System.Threading;
 
 namespace KeywordGetherer
 {
     class DBConection
     {
+        private static Mutex dbMutext = new Mutex();
+
         public class DBConnectionException : Exception
         {
 
         }
+
         public class DBKeyword
         {
             public string keyword { get; set; }
@@ -33,13 +36,14 @@ namespace KeywordGetherer
             conn = new MySqlConnection(connStr);
         }
 
-       
+
         public int isKeywordExist(String keyword)
         {
             if (!this.OpenConnection())
                 throw new DBConnectionException();
 
             int keyword_id = -1;
+
 
             try
             {
@@ -57,7 +61,7 @@ namespace KeywordGetherer
                 {
                     keyword_id = dataReader.GetInt32("id");
                 }
-                Console.WriteLine("keyword=>" + keyword + " id=>" + (keyword_id==-1?"нет в бд":""+keyword_id));
+                Console.WriteLine("keyword=>" + keyword + " id=>" + (keyword_id == -1 ? "нет в бд" : "" + keyword_id));
                 dataReader.Close();
                 this.CloseConnection();
                 return keyword_id;
@@ -67,6 +71,7 @@ namespace KeywordGetherer
             {
                 Console.WriteLine(e);
             }
+
             return keyword_id;
         }
         public void Insert(String keyword)
@@ -74,6 +79,7 @@ namespace KeywordGetherer
 
             if (!this.OpenConnection())
                 throw new DBConnectionException();
+
 
             try
             {
@@ -89,18 +95,19 @@ namespace KeywordGetherer
                 cmd.Parameters.AddWithValue("@keyword_kw", rgx.Replace(keyword, replacement));
                 cmd.Parameters.AddWithValue("@created_at", DateTime.Now);
                 cmd.Parameters.AddWithValue("@updated_at", DateTime.Now);
-          
+
                 cmd.ExecuteNonQuery();
             }
             catch (Exception e)
             {
-                Console.WriteLine("Ошибочка:"+e);
+                Console.WriteLine("Ошибочка:" + e);
             }
             this.CloseConnection();
+
         }
 
 
-        public List<DBKeyword> list(int offset, int limit)
+        public List<DBKeyword> listKeywords(int offset, int limit)
         {
             if (!this.OpenConnection())
                 return new List<DBKeyword>();
@@ -129,12 +136,14 @@ namespace KeywordGetherer
             this.CloseConnection();
 
             return list_kw;
+
         }
 
-        public int count()
+        public int countKewyrods()
         {
             if (!this.OpenConnection())
                 return -1;
+
 
             string query = "SELECT Count(*) FROM `keywords`";
             int Count = -1;
@@ -145,13 +154,21 @@ namespace KeywordGetherer
 
             return Count;
 
+
+        }
+
+        public string[] wordsForReport()
+        {
+            throw new Exception("100 WORDS");
         }
 
         private bool CloseConnection()
         {
+
             try
             {
                 conn.Close();
+                dbMutext.ReleaseMutex();
                 return true;
             }
             catch (MySqlException ex)
@@ -164,8 +181,10 @@ namespace KeywordGetherer
         //open connection to database
         private bool OpenConnection()
         {
+
             try
             {
+                dbMutext.WaitOne();
                 conn.Open();
                 return true;
             }
@@ -184,6 +203,7 @@ namespace KeywordGetherer
                 }
                 return false;
             }
+
         }
     }
 }

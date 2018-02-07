@@ -65,12 +65,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DBConnection.cs" />
+    <Compile Include="ForecastGetherer.cs" />
+    <Compile Include="Forecastinfo.cs" />
     <Compile Include="IniFiles.cs" />
-    <Compile Include="KwGetherer.cs" />
+    <Compile Include="KeywordGetherer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DriverUtils.cs" />
     <Compile Include="YandexDirect.cs" />
+    <Compile Include="YandexUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">

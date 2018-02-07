@@ -37,7 +37,7 @@ namespace KeywordGetherer
         }
 
 
-        public int isKeywordExist(String keyword)
+        public bool isKeywordExist(String keyword)
         {
             if (!this.OpenConnection())
                 throw new DBConnectionException();
@@ -64,15 +64,16 @@ namespace KeywordGetherer
                 Console.WriteLine("keyword=>" + keyword + " id=>" + (keyword_id == -1 ? "нет в бд" : "" + keyword_id));
                 dataReader.Close();
                 this.CloseConnection();
-                return keyword_id;
+                return (keyword_id == -1?false:true);
 
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                //Console.WriteLine(e);
+                return true;
             }
 
-            return keyword_id;
+            
         }
         public void Insert(String keyword)
         {
@@ -100,14 +101,14 @@ namespace KeywordGetherer
             }
             catch (Exception e)
             {
-                Console.WriteLine("Ошибочка:" + e);
+                //Console.WriteLine("Ошибочка:" + e);
             }
             this.CloseConnection();
 
         }
 
 
-        public List<DBKeyword> listKeywords(int offset, int limit)
+        public List<DBKeyword> listKeywords(long offset, int limit)
         {
             if (!this.OpenConnection())
                 return new List<DBKeyword>();
@@ -123,6 +124,12 @@ namespace KeywordGetherer
             //Create a data reader and Execute the command
             MySqlDataReader dataReader = cmd.ExecuteReader();
 
+            if (!dataReader.HasRows)
+            {
+                dataReader.Close();
+                this.CloseConnection();
+                return null;
+            }
             //Read the data and store them in the list
             while (dataReader.Read())
             {
@@ -139,28 +146,27 @@ namespace KeywordGetherer
 
         }
 
-        public int countKewyrods()
+        public long countKewyrods()
         {
             if (!this.OpenConnection())
                 return -1;
 
-
             string query = "SELECT Count(*) FROM `keywords`";
-            int Count = -1;
+            long Count = -1;
 
             MySqlCommand cmd = new MySqlCommand(query, conn);
-            Count = int.Parse(cmd.ExecuteScalar() + "");
+            Count = (long)(cmd.ExecuteScalar());
             this.CloseConnection();
 
             return Count;
-
-
         }
 
-        public string[] wordsForReport()
+        public string[] wordsForReport(int offsetm)
         {
             throw new Exception("100 WORDS");
         }
+
+ 
 
         private bool CloseConnection()
         {
@@ -181,7 +187,6 @@ namespace KeywordGetherer
         //open connection to database
         private bool OpenConnection()
         {
-
             try
             {
                 dbMutext.WaitOne();

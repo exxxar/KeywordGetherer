@@ -9,8 +9,10 @@ using Yandex.Direct;
 
 namespace KeywordGetherer
 {
-    class YandexDirect : DBConection
+    class YandexDirect:YandexUtils
     {
+        private const int MAX_FORECAST = 50;
+
         private YandexDirectConfiguration _ydc;
         private YandexDirectService _yds;
 
@@ -23,13 +25,16 @@ namespace KeywordGetherer
                 _ydc.Language = lang;
                 _ydc.ServiceUrl = new Uri("https://soap.direct.yandex.ru/json-api/v4/");
                 _yds = new YandexDirectService(_ydc);
+                
+
+
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
             }
         }
-
+       
         private void createForecastReport(string[] keywords, int[] regions)
         {
             _yds.CreateNewForecast(keywords, regions);
@@ -41,12 +46,13 @@ namespace KeywordGetherer
             while (!ready)
             {
                 ready = true;
-                foreach (ForecastStatus fs in _yds.GetForecastList())
-                {
+                _yds.GetForecastList().ForEach(fs =>
+                {                   
                     Console.WriteLine(fs.ForecastId + " " + fs.Status);
                     System.Threading.Thread.Sleep(1500);
                     ready &= fs.Status.Equals(ReportStatus.Done);
-                }
+                });
+               
             }
             Console.WriteLine("Все отчеты готовы!");
 
@@ -57,20 +63,25 @@ namespace KeywordGetherer
         {
 
             ForecastInfo fi = _yds.GetForecast(reportId);
-            foreach (ForecastBannerPhraseInfo _fbpi in fi.Phrases)           
-                Console.WriteLine(_fbpi.Phrase+" "+ _fbpi.Clicks+" "+ _fbpi.Shows);            
+            
+            fi.Phrases.ToList().ForEach(_fbpi=>
+            {
+                
+                Console.WriteLine(_fbpi.Phrase + " " + _fbpi.Clicks + " " + _fbpi.Shows);
+            });           
             removeReport(reportId);
 
         }
 
-        public void execute(string[] keywords, int[] regions)
+        public async void execute(string [] keywords)
         {
             try
             {
+                int[] regions = new int[] { 1 };
+                
                 createForecastReport(keywords, regions);
                 awaitForReportReady();
-                foreach (ForecastStatus fs in _yds.GetForecastList())
-                    getReport(fs.ForecastId);
+                _yds.GetForecastList().ForEach(fs=>getReport(fs.ForecastId));            
 
             }
             catch (Exception e)
@@ -88,8 +99,7 @@ namespace KeywordGetherer
 
         private void removeAllReports()
         {
-            foreach (ForecastStatus fs in _yds.GetForecastList())
-                removeReport(fs.ForecastId);
+            _yds.GetForecastList().ForEach(fs => removeReport(fs.ForecastId)); 
         }
     }
 }

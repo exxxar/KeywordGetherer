@@ -110,7 +110,7 @@ namespace KeywordGetherer
                 catch    {  }
 
                
-                this.limit = STEP;
+                this.limit = (STEP - Math.Min(taskList.Count, STEP));
                 this.offset += (STEP - Math.Min(taskList.Count, STEP));
                 settings.Write(this.loadFromFile ? "file_offset" : "offset", "" + this.offset);
 

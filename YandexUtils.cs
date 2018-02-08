@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace KeywordGetherer
 {
-    class YandexUtils
+    public static class  YandexUtils
     {
-        public string divideAndPrecede(string keyword)
+        public static string divideAndPrecede(this string keyword)
         {
             if (keyword.Trim().IndexOf("[") != -1
                 && keyword.Trim().IndexOf("]") != -1
@@ -21,7 +22,7 @@ namespace KeywordGetherer
                     b = b.Trim();
                     if (b.Length > 0)
                     {
-                        buf += b.IndexOf("+") != -1 ? "!" + b : b.Replace('+', ' ');
+                        buf += "!" + b +" " ;
                     }
                 });
             buf += "]\"";
@@ -29,9 +30,9 @@ namespace KeywordGetherer
         }
 
 
-        public string checkLenAndSlice(string keyword)
+        public static string checkLenAndSlice(this string keyword)
         {
-            Regex rgx = new Regex(@"/[-:+#*$\\\\\/]/i");
+            Regex rgx = new Regex(@"[!@#$%&*_+=-\\]");
             keyword = rgx.Replace(keyword, " ");
 
             rgx = new Regex(@"[\s]+");
@@ -41,7 +42,7 @@ namespace KeywordGetherer
                 .ToList()
                 .ForEach(word =>
                 {
-                    if (word.Trim().Length > 0 && index != 0)
+                    if (word.Trim().Length > 0 && word.Trim().Length < 35 && index != 0)
                     {
                         newKeyword += word.Trim() + " ";
                         index--;
@@ -49,5 +50,26 @@ namespace KeywordGetherer
                 });
             return newKeyword.Trim();
         }
+
+        public static string restoringPrecede(this string keyword)
+        {
+            keyword = keyword.Replace("\"", "");
+
+            Regex rgx = new Regex(@"[!\[\]]");
+            keyword = rgx.Replace(keyword, " ");
+
+            StringBuilder str = new StringBuilder();
+            keyword.Split(' ')
+                .ToList()
+                .ForEach(kw=> {
+                    if (kw.Trim().Length > 0)
+                        str
+                        .Append(kw.Trim())
+                        .Append(" ");
+                });
+       
+            return str.ToString();
+        }
+
     }
 }

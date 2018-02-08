@@ -9,7 +9,7 @@ using Yandex.Direct;
 
 namespace KeywordGetherer
 {
-    class YandexDirect:YandexUtils
+    class YandexDirect:DBConection
     {
         private const int MAX_FORECAST = 50;
 
@@ -25,7 +25,7 @@ namespace KeywordGetherer
                 _ydc.Language = lang;
                 _ydc.ServiceUrl = new Uri("https://soap.direct.yandex.ru/json-api/v4/");
                 _yds = new YandexDirectService(_ydc);
-                
+                Console.WriteLine("Подключились к Forecast");
 
 
             }
@@ -64,9 +64,25 @@ namespace KeywordGetherer
 
             ForecastInfo fi = _yds.GetForecast(reportId);
             
+          
             fi.Phrases.ToList().ForEach(_fbpi=>
             {
+                Forecastinfo fc = new Forecastinfo();
+                fc.Clicks = _fbpi.Clicks;
+                fc.ContextPrice = _fbpi.ContextPrice;
+                fc.FirstPlaceClicks = _fbpi.FirstPlaceClicks;
+                fc.FirstPlaceCtr = _fbpi.FirstPlaceCtr;
+                fc.PremiumClicks = _fbpi.PremiumClicks;
+                fc.PremiumCtr = _fbpi.PremiumCtr;
+                fc.PremiumMax = _fbpi.PremiumMax;
+                fc.PremiumMin = _fbpi.PremiumMin;
+                fc.CTR = 0;
+                fc.Shows = _fbpi.Shows;
+                fc.is_preceded = _fbpi.Phrase.IndexOf("!") != -1 ? true : false;
+                fc.Keyword_id = this.isKeywordExist(_fbpi.Phrase.restoringPrecede()) ? this.getKeywordId(_fbpi.Phrase.restoringPrecede()) : -1;
+                this.InsertForecast(fc);
                 
+
                 Console.WriteLine(_fbpi.Phrase + " " + _fbpi.Clicks + " " + _fbpi.Shows);
             });           
             removeReport(reportId);

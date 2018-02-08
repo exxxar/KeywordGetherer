@@ -15,13 +15,9 @@ namespace KeywordGetherer
     {
         static void Main(string[] args)
         {
-
-            KeywordGetherer kwGetherer = new KeywordGetherer();
-           // ForecastGetherer fcGetherer = new ForecastGetherer();
-
-            Task.Run(() => kwGetherer.execute());
+            Task.Run(() => (new KeywordGetherer()).execute());
+            Task.Run(() => (new ForecastGetherer()).execute());
             Console.ReadLine();
-            //Task.Run(() => fcGetherer.execute());
         }
     }
 }

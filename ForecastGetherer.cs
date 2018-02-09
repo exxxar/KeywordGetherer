@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace KeywordGetherer
 {
-    class ForecastGetherer:DBConection
+    class ForecastGetherer : DBConection
     {
         private const int LIMIT = 50;
         protected int forecastOffset;
@@ -25,7 +25,7 @@ namespace KeywordGetherer
         {
             File.ReadAllLines("accounts.txt")
                 .ToList()
-                .ForEach(s=>
+                .ForEach(s =>
                 {
                     //azyexxxar 906fe2dd055a4f6fa08b0765156e6cf7 AQAAAAAhzCtcAASm9aZlZ6gwzUielkMitN3PEsc
                     string[] buf = s.Split(';');
@@ -42,14 +42,12 @@ namespace KeywordGetherer
 
                             tempList
                             .ForEach(w =>
-                            {
-                                Console.WriteLine("Формируем Forecast для [{0}]", w.keyword);
-                                Console.WriteLine("Формируем Forecast для [{0}]", w.keyword.checkLenAndSlice().divideAndPrecede());
+                            {                                
                                 temp.Add(w.keyword);
                                 temp.Add(w.keyword.checkLenAndSlice().divideAndPrecede());
 
                             });
-
+                            Console.WriteLine("Запускаем отчет");
                             yandexDirect.execute(temp.ToArray());
 
                             this.forecastOffset += LIMIT;
@@ -60,6 +58,6 @@ namespace KeywordGetherer
                 });
         }
 
-   
+
     }
 }

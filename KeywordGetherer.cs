@@ -82,8 +82,8 @@ namespace KeywordGetherer
             long count = this.fileDataCount();
 
             while (true)
-            {               
-                    
+            {
+
                 List<DBKeyword> list = loadFromFile ? loadFile(offset, limit) : this.listKeywords(offset, limit);
                 if (list == null)
                     break;
@@ -107,9 +107,9 @@ namespace KeywordGetherer
                         .ToList()
                         .ForEach(t => taskList.Remove(t));
                 }
-                catch    {  }
+                catch { }
 
-               
+
                 this.limit = (STEP - Math.Min(taskList.Count, STEP));
                 this.offset += (STEP - Math.Min(taskList.Count, STEP));
                 settings.Write(this.loadFromFile ? "file_offset" : "offset", "" + this.offset);

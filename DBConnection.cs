@@ -59,10 +59,10 @@ namespace KeywordGetherer
                 {
                     keyword_id = dataReader.GetInt32("id");
                 }
-         
+
                 dataReader.Close();
                 this.CloseConnection();
-                return keyword_id ;
+                return keyword_id;
 
             }
             catch (Exception e)
@@ -98,7 +98,7 @@ namespace KeywordGetherer
                 Console.WriteLine("keyword=>" + keyword + " id=>" + (keyword_id == -1 ? "нет в бд" : "" + keyword_id));
                 dataReader.Close();
                 this.CloseConnection();
-                return (keyword_id == -1?false:true);
+                return (keyword_id == -1 ? false : true);
 
             }
             catch (Exception e)
@@ -107,7 +107,7 @@ namespace KeywordGetherer
                 return true;
             }
 
-            
+
         }
         public void Insert(String keyword)
         {
@@ -141,7 +141,7 @@ namespace KeywordGetherer
 
         }
 
-        public void InsertForecast(Forecastinfo forecast)
+        public int InsertForecast(Forecastinfo forecast)
         {
             //return;
             if (!this.OpenConnection())
@@ -150,10 +150,10 @@ namespace KeywordGetherer
 
             try
             {
-         
+
                 string query = "INSERT INTO `forecastinfo` " +
                     "(`min`,`max`,`premium_min`,`premium_max`,`shows`,`clicks`,`first_place_clicks`,`premium_clicks`,`ctr`,`first_place_ctr`,`premium_ctr`,`currency`,`Keywords_id`,`is_preceded` ,`created_at`, `updated_at`) VALUES " +
-                    "(@min,@max,@premium_min,@premium_max,@shows,@clicks,@first_place_clicks,@premium_clicks,@ctr,@first_place_ctr,@premium_ctr,@currency,@Keywords_id,@is_preceded ,@created_at, @updated_at)";
+                    "(@min,@max,@premium_min,@premium_max,@shows,@clicks,@first_place_clicks,@premium_clicks,@ctr,@first_place_ctr,@premium_ctr,@currency,@Keywords_id,@is_preceded ,@created_at, @updated_at) SELECT SCOPE_IDENTITY()";
 
 
                 MySqlCommand cmd = new MySqlCommand(query, conn);
@@ -172,6 +172,39 @@ namespace KeywordGetherer
                 cmd.Parameters.AddWithValue("@Keywords_id", forecast.Keyword_id);
                 cmd.Parameters.AddWithValue("@is_preceded", forecast.is_preceded);
 
+                cmd.Parameters.AddWithValue("@created_at", DateTime.Now);
+                cmd.Parameters.AddWithValue("@updated_at", DateTime.Now);
+
+                return (int)(decimal)cmd.ExecuteScalar();
+            }
+            catch (Exception e)
+            {
+                //Console.WriteLine("Ошибочка:" + e);
+            }
+            this.CloseConnection();
+            return -1;
+        }
+
+        public void InsertAuctionBids(AuctionBids auctionBids)
+        {
+            //return;
+            if (!this.OpenConnection())
+                throw new DBConnectionException();
+
+
+            try
+            {
+
+                string query = "INSERT INTO `auctionbids` " +
+                    "(`position`,`bid`,`price`,`forecastInfo_id`,`created_at`, `updated_at`) VALUES " +
+                    "(@position,@bid,@price,@forecastInfo_id,@created_at, @updated_at)";
+
+
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@position", auctionBids.Position);
+                cmd.Parameters.AddWithValue("@bid", auctionBids.Bid);
+                cmd.Parameters.AddWithValue("@price", auctionBids.Price);
+                cmd.Parameters.AddWithValue("@forecastInfo_id", auctionBids.forecastInfo_id);
                 cmd.Parameters.AddWithValue("@created_at", DateTime.Now);
                 cmd.Parameters.AddWithValue("@updated_at", DateTime.Now);
 
@@ -246,7 +279,7 @@ namespace KeywordGetherer
             return Count;
         }
 
-        public List<DBKeyword> wordsForReport(int offset,int limit)
+        public List<DBKeyword> wordsForReport(int offset, int limit)
         {
             if (!this.OpenConnection())
                 return new List<DBKeyword>();
@@ -283,7 +316,7 @@ namespace KeywordGetherer
             return list_kw;
         }
 
- 
+
 
         private bool CloseConnection()
         {

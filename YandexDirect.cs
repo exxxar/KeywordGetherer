@@ -9,7 +9,7 @@ using Yandex.Direct;
 
 namespace KeywordGetherer
 {
-    class YandexDirect:DBConection
+    class YandexDirect : DBConection
     {
         private const int MAX_FORECAST = 50;
 
@@ -20,12 +20,13 @@ namespace KeywordGetherer
         {
             try
             {
-                _ydc = new YandexDirectConfiguration();
-                _ydc.AuthProvider = new TokenAuthProvider(login, appId, token);
-                _ydc.Language = lang;
-                _ydc.ServiceUrl = new Uri("https://soap.direct.yandex.ru/json-api/v4/");
-                _yds = new YandexDirectService(_ydc);
+                this._ydc = new YandexDirectConfiguration();
+                this._ydc.AuthProvider = new TokenAuthProvider(login, appId, token);
+                this._ydc.Language = lang;
+                this._ydc.ServiceUrl = new Uri("https://soap.direct.yandex.ru/json-api/v4/");
+                this._yds = new YandexDirectService(_ydc);
                 Console.WriteLine("Подключились к Forecast");
+
 
 
             }
@@ -34,10 +35,17 @@ namespace KeywordGetherer
                 Console.WriteLine(e.Message);
             }
         }
-       
+
         private void createForecastReport(string[] keywords, int[] regions)
         {
-            _yds.CreateNewForecast(keywords, regions);
+            try
+            {
+                this._yds.CreateNewForecast(keywords, regions);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("МЫ ТУТ УПАЛИ!" + e.Message);
+            }
         }
 
         private void awaitForReportReady()
@@ -46,13 +54,13 @@ namespace KeywordGetherer
             while (!ready)
             {
                 ready = true;
-                _yds.GetForecastList().ForEach(fs =>
-                {                   
+                this._yds.GetForecastList().ForEach(fs =>
+                {
                     Console.WriteLine(fs.ForecastId + " " + fs.Status);
                     System.Threading.Thread.Sleep(1500);
                     ready &= fs.Status.Equals(ReportStatus.Done);
                 });
-               
+
             }
             Console.WriteLine("Все отчеты готовы!");
 
@@ -63,10 +71,11 @@ namespace KeywordGetherer
         {
 
             ForecastInfo fi = _yds.GetForecast(reportId);
-            
-          
-            fi.Phrases.ToList().ForEach(_fbpi=>
+            Console.WriteLine("Получаем отчет с айди {0}", reportId);
+
+            fi.Phrases.ToList().ForEach(_fbpi =>
             {
+
                 Forecastinfo fc = new Forecastinfo();
                 fc.Clicks = _fbpi.Clicks;
                 fc.ContextPrice = _fbpi.ContextPrice;
@@ -76,28 +85,41 @@ namespace KeywordGetherer
                 fc.PremiumCtr = _fbpi.PremiumCtr;
                 fc.PremiumMax = _fbpi.PremiumMax;
                 fc.PremiumMin = _fbpi.PremiumMin;
-                fc.CTR = 0;
+                fc.CTR = fc.CTR;
                 fc.Shows = _fbpi.Shows;
                 fc.is_preceded = _fbpi.Phrase.IndexOf("!") != -1 ? true : false;
                 fc.Keyword_id = this.isKeywordExist(_fbpi.Phrase.restoringPrecede()) ? this.getKeywordId(_fbpi.Phrase.restoringPrecede()) : -1;
-                this.InsertForecast(fc);
-                
-
-                Console.WriteLine(_fbpi.Phrase + " " + _fbpi.Clicks + " " + _fbpi.Shows);
-            });           
+                int addedId = this.InsertForecast(fc);
+                if (addedId != -1 && _fbpi.AuctionBids != null)
+                    _fbpi
+                        .AuctionBids
+                        .ToList()
+                        .ForEach(_ab_item =>
+                        {
+                            AuctionBids ab = new AuctionBids();
+                            ab.Position = _ab_item.Position;
+                            ab.Bid = _ab_item.Bid;
+                            ab.Price = _ab_item.Price;
+                            ab.forecastInfo_id = addedId;
+                            this.InsertAuctionBids(ab);
+                        });
+                Console.WriteLine("Добавлени для фразы=> " + _fbpi.Phrase);
+            });
             removeReport(reportId);
 
         }
 
-        public async void execute(string [] keywords)
+        public async void execute(string[] keywords)
         {
             try
             {
                 int[] regions = new int[] { 1 };
-                
+                Console.WriteLine("Создаем отчет");
                 createForecastReport(keywords, regions);
+                Console.WriteLine("Ждем пока подготовится отчет");
                 awaitForReportReady();
-                _yds.GetForecastList().ForEach(fs=>getReport(fs.ForecastId));            
+                Console.WriteLine("Разбираем инфу из отчета");
+                _yds.GetForecastList().ForEach(fs => getReport(fs.ForecastId));
 
             }
             catch (Exception e)
@@ -115,7 +137,7 @@ namespace KeywordGetherer
 
         private void removeAllReports()
         {
-            _yds.GetForecastList().ForEach(fs => removeReport(fs.ForecastId)); 
+            _yds.GetForecastList().ForEach(fs => removeReport(fs.ForecastId));
         }
     }
 }

@@ -125,7 +125,6 @@ namespace KeywordGetherer
                     "(`keyword`, `created_at`, `updated_at`) VALUES " +
                     "(@keyword_kw,@created_at,@updated_at)";
 
-
                 MySqlCommand cmd = new MySqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@keyword_kw", rgx.Replace(keyword, replacement));
                 cmd.Parameters.AddWithValue("@created_at", DateTime.Now);
@@ -153,7 +152,7 @@ namespace KeywordGetherer
 
                 string query = "INSERT INTO `forecastinfo` " +
                     "(`min`,`max`,`premium_min`,`premium_max`,`shows`,`clicks`,`first_place_clicks`,`premium_clicks`,`ctr`,`first_place_ctr`,`premium_ctr`,`currency`,`Keywords_id`,`is_preceded` ,`created_at`, `updated_at`) VALUES " +
-                    "(@min,@max,@premium_min,@premium_max,@shows,@clicks,@first_place_clicks,@premium_clicks,@ctr,@first_place_ctr,@premium_ctr,@currency,@Keywords_id,@is_preceded ,@created_at, @updated_at) SELECT SCOPE_IDENTITY()";
+                    "(@min,@max,@premium_min,@premium_max,@shows,@clicks,@first_place_clicks,@premium_clicks,@ctr,@first_place_ctr,@premium_ctr,@currency,@Keywords_id,@is_preceded ,@created_at, @updated_at)";
 
 
                 MySqlCommand cmd = new MySqlCommand(query, conn);
@@ -174,12 +173,15 @@ namespace KeywordGetherer
 
                 cmd.Parameters.AddWithValue("@created_at", DateTime.Now);
                 cmd.Parameters.AddWithValue("@updated_at", DateTime.Now);
-
-                return (int)(decimal)cmd.ExecuteScalar();
+                cmd.ExecuteNonQuery();
+                int lastId = (int)cmd.LastInsertedId;
+                this.CloseConnection();
+                return lastId;
+                
             }
             catch (Exception e)
             {
-                //Console.WriteLine("Ошибочка:" + e);
+                Console.WriteLine("Ошибочка InsertForecast:" + e);
             }
             this.CloseConnection();
             return -1;
@@ -199,9 +201,24 @@ namespace KeywordGetherer
                     "(`position`,`bid`,`price`,`forecastInfo_id`,`created_at`, `updated_at`) VALUES " +
                     "(@position,@bid,@price,@forecastInfo_id,@created_at, @updated_at)";
 
+                int pos = 0;
 
+
+                switch (auctionBids.Position.ToUpper())
+                {
+                    case "P11": pos = 1; break;
+                    case "P12": pos = 2; break;
+                    case "P13": pos = 3; break;
+                    case "P14": pos = 4; break;
+                    case "P21": pos = 5; break;
+                    case "P22": pos = 6; break;
+                    case "P23": pos = 7; break;
+                    case "P24": pos = 8; break;
+                }
+
+                Console.WriteLine("auctionBids=>" + auctionBids.ToString());
                 MySqlCommand cmd = new MySqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@position", auctionBids.Position);
+                cmd.Parameters.AddWithValue("@position", pos);
                 cmd.Parameters.AddWithValue("@bid", auctionBids.Bid);
                 cmd.Parameters.AddWithValue("@price", auctionBids.Price);
                 cmd.Parameters.AddWithValue("@forecastInfo_id", auctionBids.forecastInfo_id);
@@ -212,7 +229,7 @@ namespace KeywordGetherer
             }
             catch (Exception e)
             {
-                //Console.WriteLine("Ошибочка:" + e);
+                Console.WriteLine("Ошибочка InsertAuctionBids:" + e);
             }
             this.CloseConnection();
 

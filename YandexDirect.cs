@@ -23,11 +23,9 @@ namespace KeywordGetherer
                 this._ydc = new YandexDirectConfiguration();
                 this._ydc.AuthProvider = new TokenAuthProvider(login, appId, token);
                 this._ydc.Language = lang;
-                this._ydc.ServiceUrl = new Uri("https://soap.direct.yandex.ru/json-api/v4/");
+                this._ydc.ServiceUrl = new Uri("https://api.direct.yandex.ru/live/v4/json/");
                 this._yds = new YandexDirectService(_ydc);
                 Console.WriteLine("Подключились к Forecast");
-
-
 
             }
             catch (Exception e)
@@ -76,6 +74,7 @@ namespace KeywordGetherer
             fi.Phrases.ToList().ForEach(_fbpi =>
             {
 
+                Console.WriteLine("Глянем что в AuctionBids, а там {0}", _fbpi.AuctionBids==null?"пусто":"что-то есть");
                 Forecastinfo fc = new Forecastinfo();
                 fc.Clicks = _fbpi.Clicks;
                 fc.ContextPrice = _fbpi.ContextPrice;
@@ -90,12 +89,15 @@ namespace KeywordGetherer
                 fc.is_preceded = _fbpi.Phrase.IndexOf("!") != -1 ? true : false;
                 fc.Keyword_id = this.isKeywordExist(_fbpi.Phrase.restoringPrecede()) ? this.getKeywordId(_fbpi.Phrase.restoringPrecede()) : -1;
                 int addedId = this.InsertForecast(fc);
+                Console.WriteLine("Добавлен ForecastInfo c id=> "+addedId);
                 if (addedId != -1 && _fbpi.AuctionBids != null)
+                {
                     _fbpi
                         .AuctionBids
                         .ToList()
                         .ForEach(_ab_item =>
                         {
+
                             AuctionBids ab = new AuctionBids();
                             ab.Position = _ab_item.Position;
                             ab.Bid = _ab_item.Bid;
@@ -103,7 +105,9 @@ namespace KeywordGetherer
                             ab.forecastInfo_id = addedId;
                             this.InsertAuctionBids(ab);
                         });
-                Console.WriteLine("Добавлени для фразы=> " + _fbpi.Phrase);
+                    Console.WriteLine("Добавление AuctionBids для фразы=> " + _fbpi.Phrase);
+                }
+             
             });
             removeReport(reportId);
 

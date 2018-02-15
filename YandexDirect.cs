@@ -12,12 +12,13 @@ namespace KeywordGetherer
     class YandexDirect : DBConection
     {
         private const int MAX_FORECAST = 50;
-
         private YandexDirectConfiguration _ydc;
         private YandexDirectService _yds;
+        private String login;
 
         public YandexDirect(string login, string appId, string token, YandexApiLanguage lang = YandexApiLanguage.English)
         {
+            this.login = login;
             try
             {
                 this._ydc = new YandexDirectConfiguration();
@@ -117,18 +118,21 @@ namespace KeywordGetherer
         {
             try
             {
-                int[] regions = new int[] { 1 };
-                Console.WriteLine("Создаем отчет");
-                createForecastReport(keywords, regions);
-                Console.WriteLine("Ждем пока подготовится отчет");
-                awaitForReportReady();
-                Console.WriteLine("Разбираем инфу из отчета");
-                _yds.GetForecastList().ForEach(fs => getReport(fs.ForecastId));
-
+                ClientUnitInfo _cui = _yds.GetClientsUnits(new string[] { this.login })[0];
+                if (_cui.UnitsRest != 0)
+                {
+                    int[] regions = new int[] { 1 };
+                    Console.WriteLine("Создаем отчет");
+                    createForecastReport(keywords, regions);
+                    Console.WriteLine("Ждем пока подготовится отчет");
+                    awaitForReportReady();
+                    Console.WriteLine("Разбираем инфу из отчета");
+                    _yds.GetForecastList().ForEach(fs => getReport(fs.ForecastId));
+                }
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Task.Run(()=>execute(keywords));
             }
 
         }

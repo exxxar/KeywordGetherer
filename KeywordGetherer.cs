@@ -89,7 +89,7 @@ namespace KeywordGetherer
                     break;
 
                 list.ForEach(kw =>
-                {
+                {                    
                     taskList.Add(Task.Run(() =>
                     {
                         this.takeKW(kw);
@@ -160,6 +160,8 @@ namespace KeywordGetherer
                         {
                             if (!this.isKeywordExist(keyword))
                                 this.Insert(keyword);
+
+                            keyword.sliceAndTakeVariants();
                         }
 
                     });

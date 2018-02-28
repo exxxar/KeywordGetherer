@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -38,7 +39,7 @@ namespace KeywordGetherer
             this.loadFromFile = false;
             this.loadFromPath = "";
 
-            settings = new IniFiles("Settings.ini");
+            settings = new IniFiles(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)+"/Settings.ini");
 
 
             this.limit = !settings.KeyExists("limit") ?
@@ -49,9 +50,10 @@ namespace KeywordGetherer
               Boolean.Parse(settings.Write("loadFromFile", "false")) :
               Boolean.Parse(settings.Read("loadFromFile"));
 
-            this.loadFromPath = !settings.KeyExists("loadFromPath") ?
+            this.loadFromPath = System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/" 
+                + (!settings.KeyExists("loadFromPath") ?
                 settings.Write("loadFromPath", "words.txt") :
-                settings.Read("loadFromPath");
+                settings.Read("loadFromPath"));
 
             if (loadFromFile)
                 this.offset = !settings.KeyExists("file_offset") ?
@@ -100,7 +102,7 @@ namespace KeywordGetherer
                     {
                         this.takeKW(kw);
                     }));
-                    Thread.Sleep(5000);
+                    Thread.Sleep(YandexUtils.rndSleep());
                 });
                 Console.WriteLine("Задач в таске:" + taskList.Count());
 
@@ -123,15 +125,15 @@ namespace KeywordGetherer
                     offset = long.Parse(settings.Read("offset"));
                     loadFromFile = false;
                     Console.WriteLine("Переключаемся на выборку из БД");
-                    Thread.Sleep(5000);
+                    Thread.Sleep(YandexUtils.rndSleep());
                 }
-                Thread.Sleep(5000);
+                Thread.Sleep(YandexUtils.rndSleep());
                 Console.WriteLine("offset=>" + offset + " count=>" + count);
             }
 
         }
 
-        private async void takeKW(DBKeyword kw)
+        private async void takeKW(DBKeyword kw, Boolean useSlicer = false)
         {
 
             ChromeDriver driver = this.initDriver(kw);
@@ -147,7 +149,7 @@ namespace KeywordGetherer
             element.SendKeys(Keys.Enter);
 
             while (!File.Exists(fileName))
-                Thread.Sleep(2000);
+                Thread.Sleep(YandexUtils.rndSleep());
             driver.Close();
             try
             {
@@ -164,7 +166,8 @@ namespace KeywordGetherer
                             if (!this.isKeywordExist(keyword))
                                 this.Insert(keyword);
 
-                            keyword.sliceAndTakeVariants();
+                            if (useSlicer)
+                                keyword.sliceAndTakeVariants();
                         }
 
                     });

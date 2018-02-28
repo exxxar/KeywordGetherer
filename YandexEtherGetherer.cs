@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,21 +10,27 @@ namespace KeywordGetherer
     {
         public int taskLimit { get; set; }
         public string etherUrl { get; set; }
-        public YandexEtherGetherer(string etherUrl= "https://export.yandex.ru/last/last20x.xml", int taskLimit = 5)
+        public YandexEtherGetherer(int taskLimit = 5, string etherUrl = "https://export.yandex.ru/last/last20x.xml")
         {
             this.taskLimit = taskLimit;
             this.etherUrl = etherUrl;
         }
         public async void execute()
         {
+            if (this.taskLimit <= 0)
+                return;
+
             List<Task> taskList = new List<Task>();
             while (true)
             {
-                var task = Task.Run(() => (new YandexEther(this.etherUrl)).parse());
-                taskList.Add(task);
+                try
+                {
+                    taskList.Add(Task.Run(() => (new YandexEther(this.etherUrl)).parse()));
+                }catch { }
+
                 Console.WriteLine("=====>Добавлена задача!Всего {0} задач", taskList.Count);
-                Thread.Sleep(3000);
-                if (taskList.Count == this.taskLimit)
+                Thread.Sleep(YandexUtils.rndSleep());
+                if (taskList.Count >= this.taskLimit)
                 {                   
                     Task.WaitAny(taskList.ToArray());
                     try

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Yandex.Direct.Configuration;
 using Yandex.Direct.Authentication;
@@ -56,7 +54,7 @@ namespace KeywordGetherer
                 this._yds.GetForecastList().ForEach(fs =>
                 {
                     Console.WriteLine(fs.ForecastId + " " + fs.Status);
-                    System.Threading.Thread.Sleep(1500);
+                    System.Threading.Thread.Sleep(YandexUtils.rndSleep());
                     ready &= fs.Status.Equals(ReportStatus.Done);
                 });
 

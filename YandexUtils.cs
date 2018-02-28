@@ -8,6 +8,12 @@ namespace KeywordGetherer
 {
     public static class  YandexUtils
     {
+        private static Random rand;
+        public static int rndSleep(int min = 1000,int max=15000)
+        {
+            rand = new Random();
+            return rand.Next(min, max);
+        }
         public static void sliceAndTakeVariants(this string keyword)
         {
             DBConection db = new DBConection();           

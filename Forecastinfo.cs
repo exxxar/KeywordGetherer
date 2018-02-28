@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace KeywordGetherer
 {
-    class Forecastinfo:DBConection
+    public class Forecastinfo
     {
         public int Clicks { get; set; }
         public int FirstPlaceClicks { get; set; }

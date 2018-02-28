@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace KeywordGetherer
 {
-    class DBConection
+    public class DBConection
     {
         private static Mutex dbMutext = new Mutex();
 

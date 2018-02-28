@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace KeywordGetherer
@@ -13,6 +14,8 @@ namespace KeywordGetherer
     {
         string Path;
         string EXE = Assembly.GetExecutingAssembly().GetName().Name;
+
+        private static Mutex iniMutext = new Mutex();
 
         [DllImport("kernel32", CharSet = CharSet.Unicode)]
         static extern long WritePrivateProfileString(string Section, string Key, string Value, string FilePath);
@@ -27,14 +30,18 @@ namespace KeywordGetherer
 
         public string Read(string Key, string Section = null)
         {
+            iniMutext.WaitOne();
             var RetVal = new StringBuilder(255);
             GetPrivateProfileString(Section ?? EXE, Key, "", RetVal, 255, Path);
+            iniMutext.ReleaseMutex();
             return RetVal.ToString();
         }
 
         public String Write(string Key, string Value, string Section = null)
         {
+            iniMutext.WaitOne();
             WritePrivateProfileString(Section ?? EXE, Key, Value, Path);
+            iniMutext.ReleaseMutex();
             return Value;
         }
 

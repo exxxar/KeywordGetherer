@@ -13,6 +13,7 @@ namespace KeywordGetherer
 {
     class KeywordGetherer : DBConection
     {
+        private static Mutex kwMutext = new Mutex();
         public const int STEP = 5;
         protected long offset;
         protected int limit;
@@ -83,11 +84,16 @@ namespace KeywordGetherer
 
             while (true)
             {
+                kwMutext.WaitOne();
+                this.limit = (STEP - Math.Min(taskList.Count, STEP));
+                this.offset += (STEP - Math.Min(taskList.Count, STEP));
+                settings.Write(this.loadFromFile ? "file_offset" : "offset", "" + this.offset);
 
                 List<DBKeyword> list = loadFromFile ? loadFile(offset, limit) : this.listKeywords(offset, limit);
                 if (list == null)
                     break;
 
+                kwMutext.ReleaseMutex();
                 list.ForEach(kw =>
                 {                    
                     taskList.Add(Task.Run(() =>
@@ -110,9 +116,6 @@ namespace KeywordGetherer
                 catch { }
 
 
-                this.limit = (STEP - Math.Min(taskList.Count, STEP));
-                this.offset += (STEP - Math.Min(taskList.Count, STEP));
-                settings.Write(this.loadFromFile ? "file_offset" : "offset", "" + this.offset);
 
                 if (loadFromFile && offset >= count)
                 {

@@ -19,7 +19,7 @@ namespace KeywordGetherer
         {
             this.url = etherUrl;
         }
-        public async void parse(Boolean useSlicer = false)
+        public async void parse(Boolean useSlicer = true)
         {
             StreamReader objReader;
 

@@ -15,7 +15,7 @@ namespace KeywordGetherer
     class KeywordGetherer : DBConection
     {
         private static Mutex kwMutext = new Mutex();
-        public const int STEP = 5;
+        protected int STEP;
         protected long offset;
         protected int limit;
         protected long file_offset;
@@ -24,8 +24,9 @@ namespace KeywordGetherer
         protected IniFiles settings;
 
 
-        public KeywordGetherer()
+        public KeywordGetherer(int step=5)
         {
+            this.STEP = step;
             this.init();
         }
 
@@ -93,7 +94,10 @@ namespace KeywordGetherer
 
                 List<DBKeyword> list = loadFromFile ? loadFile(offset, limit) : this.listKeywords(offset, limit);
                 if (list == null)
+                {
+                    kwMutext.ReleaseMutex();
                     break;
+                }
 
                 kwMutext.ReleaseMutex();
                 list.ForEach(kw =>
@@ -133,7 +137,7 @@ namespace KeywordGetherer
 
         }
 
-        private async void takeKW(DBKeyword kw, Boolean useSlicer = false)
+        private async void takeKW(DBKeyword kw, Boolean useSlicer = true)
         {
 
             ChromeDriver driver = this.initDriver(kw);

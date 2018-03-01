@@ -189,10 +189,8 @@ namespace KeywordGetherer
 
         public void InsertAuctionBids(AuctionBids auctionBids)
         {
-            //return;
             if (!this.OpenConnection())
                 throw new DBConnectionException();
-
 
             try
             {
@@ -235,16 +233,42 @@ namespace KeywordGetherer
 
         }
 
+        public List<string> listSites(long offset,int limit)
+        {
 
+            if (!this.OpenConnection())
+                return new List<string>();
+
+            //выбирае из бд инфу с определенным смещением, чтоб не нагружать оперативку
+            string query = "SELECT * FROM `site`  ORDER BY `site_id` desc LIMIT @limit OFFSET @offset ";
+            List<string> list_sites = new List<string>();
+
+            //Create Command
+            MySqlCommand cmd = new MySqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@limit", limit);
+            cmd.Parameters.AddWithValue("@offset", offset);
+            //Create a data reader and Execute the command
+            MySqlDataReader dataReader = cmd.ExecuteReader();
+
+            if (!dataReader.HasRows)
+            {
+                dataReader.Close();
+                this.CloseConnection();
+                return null;
+            }
+            //Read the data and store them in the list
+            while (dataReader.Read())         
+                list_sites.Add(""+dataReader["site"]);
+            
+
+            dataReader.Close();
+            this.CloseConnection();
+
+            return list_sites;
+        }
         public List<DBKeyword> listKeywords(long offset, int limit)
         {
-            //List<DBKeyword> l = new List<DBKeyword>();
-            //for (int i = 0; i < limit; i++) {
-            //    DBKeyword kw = new DBKeyword();
-            //    kw.keyword = "окна";
-            //    l.Add(kw);
-            //}
-            //return l;
+          
             if (!this.OpenConnection())
                 return new List<DBKeyword>();
 

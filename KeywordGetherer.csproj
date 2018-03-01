@@ -70,9 +70,11 @@
     <Compile Include="Forecastinfo.cs" />
     <Compile Include="IniFiles.cs" />
     <Compile Include="KeywordGetherer.cs" />
+    <Compile Include="KeywordsBySiteGetherer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DriverUtils.cs" />
+    <Compile Include="SelfRestarter.cs" />
     <Compile Include="YandexDirect.cs" />
     <Compile Include="YandexEther.cs" />
     <Compile Include="YandexEtherGetherer.cs" />

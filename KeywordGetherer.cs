@@ -105,6 +105,7 @@ namespace KeywordGetherer
                     taskList.Add(Task.Run(() =>
                     {
                         this.takeKW(kw);
+                       
                     }));
                     Thread.Sleep(YandexUtils.rndSleep());
                 });
@@ -117,7 +118,10 @@ namespace KeywordGetherer
                     taskList
                         .Where(t => t.IsCompleted)
                         .ToList()
-                        .ForEach(t => taskList.Remove(t));
+                        .ForEach(t => {
+                            taskList.Remove(t);
+                           
+                        });
                 }
                 catch { }
 

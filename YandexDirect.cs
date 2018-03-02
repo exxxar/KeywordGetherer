@@ -116,6 +116,7 @@ namespace KeywordGetherer
         {
             try
             {
+            
                 ClientUnitInfo _cui = _yds.GetClientsUnits(new string[] { this.login })[0];
                 if (_cui.UnitsRest != 0)
                 {
@@ -130,7 +131,10 @@ namespace KeywordGetherer
             }
             catch (Exception e)
             {
-                Task.Run(()=>execute(keywords));
+                Task.Run(()=> {
+                    this.execute(keywords);
+                   
+                });
             }
 
         }

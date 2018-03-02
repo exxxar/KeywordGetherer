@@ -29,11 +29,12 @@ namespace KeywordGetherer
                 .ToList()
                 .ForEach(s =>
                 {
-                 
+                   
                     string[] buf = s.Split(';');
                     Console.WriteLine("Выбираем аккаунт Login [{0}], AppId [{1}], Token [{2}]", buf[0], buf[1], buf[2]);
                     Task.Run(() =>
                     {
+                       
                         YandexDirect yandexDirect = new YandexDirect(buf[0], buf[1], buf[2]);
                         while (true)
                         {

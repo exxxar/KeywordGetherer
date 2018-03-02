@@ -30,10 +30,16 @@ namespace KeywordGetherer
 
         public void Initialize()
         {
-            string connStr = ConfigurationManager
-                .ConnectionStrings["keywordsConnStr"]
-                .ConnectionString;
-            conn = new MySqlConnection(connStr);
+            try
+            {
+                string connStr = ConfigurationManager
+                    .ConnectionStrings["keywordsConnStr"]
+                    .ConnectionString;
+                conn = new MySqlConnection(connStr);
+            } catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         public int getKeywordId(String keyword)
@@ -42,8 +48,7 @@ namespace KeywordGetherer
                 throw new DBConnectionException();
 
             int keyword_id = -1;
-
-
+            
             try
             {
                 string replacement = "";
@@ -65,9 +70,8 @@ namespace KeywordGetherer
                 return keyword_id;
 
             }
-            catch (Exception e)
+            catch 
             {
-                //Console.WriteLine(e);
                 return -1;
             }
         }
@@ -78,15 +82,13 @@ namespace KeywordGetherer
 
             int keyword_id = -1;
 
+            string replacement = "";
+            Regex rgx = new Regex("['\"]");
+
+            string query = "SELECT * FROM `keywords` WHERE `keyword`=@keyword;";
 
             try
-            {
-                string replacement = "";
-                Regex rgx = new Regex("['\"]");
-
-
-                string query = "SELECT * FROM `keywords` WHERE `keyword`=@keyword;";
-
+            { 
                 MySqlCommand cmd = new MySqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@keyword", rgx.Replace(keyword, replacement));
                 MySqlDataReader dataReader = cmd.ExecuteReader();
@@ -99,11 +101,9 @@ namespace KeywordGetherer
                 dataReader.Close();
                 this.CloseConnection();
                 return (keyword_id == -1 ? false : true);
-
             }
-            catch (Exception e)
+            catch 
             {
-                //Console.WriteLine(e);
                 return true;
             }
 
@@ -115,29 +115,23 @@ namespace KeywordGetherer
             if (!this.OpenConnection())
                 throw new DBConnectionException();
 
+            string replacement = "";
+            Regex rgx = new Regex("['\"]");
+
+            string query = "INSERT INTO `keywords` " +
+                "(`keyword`, `created_at`, `updated_at`) VALUES " +
+                "(@keyword_kw,@created_at,@updated_at)";
 
             try
             {
-                string replacement = "";
-                Regex rgx = new Regex("['\"]");
-
-                string query = "INSERT INTO `keywords` " +
-                    "(`keyword`, `created_at`, `updated_at`) VALUES " +
-                    "(@keyword_kw,@created_at,@updated_at)";
-
                 MySqlCommand cmd = new MySqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@keyword_kw", rgx.Replace(keyword, replacement));
                 cmd.Parameters.AddWithValue("@created_at", DateTime.Now);
                 cmd.Parameters.AddWithValue("@updated_at", DateTime.Now);
-
                 cmd.ExecuteNonQuery();
             }
-            catch (Exception e)
-            {
-                //Console.WriteLine("Ошибочка:" + e);
-            }
+            catch { }
             this.CloseConnection();
-
         }
 
         public int InsertForecast(Forecastinfo forecast)
@@ -146,15 +140,13 @@ namespace KeywordGetherer
             if (!this.OpenConnection())
                 throw new DBConnectionException();
 
+            string query = "INSERT INTO `forecastinfo` " +
+                 "(`min`,`max`,`premium_min`,`premium_max`,`shows`,`clicks`,`first_place_clicks`,`premium_clicks`,`ctr`,`first_place_ctr`,`premium_ctr`,`currency`,`Keywords_id`,`is_preceded` ,`created_at`, `updated_at`) VALUES " +
+                 "(@min,@max,@premium_min,@premium_max,@shows,@clicks,@first_place_clicks,@premium_clicks,@ctr,@first_place_ctr,@premium_ctr,@currency,@Keywords_id,@is_preceded ,@created_at, @updated_at)";
+
 
             try
             {
-
-                string query = "INSERT INTO `forecastinfo` " +
-                    "(`min`,`max`,`premium_min`,`premium_max`,`shows`,`clicks`,`first_place_clicks`,`premium_clicks`,`ctr`,`first_place_ctr`,`premium_ctr`,`currency`,`Keywords_id`,`is_preceded` ,`created_at`, `updated_at`) VALUES " +
-                    "(@min,@max,@premium_min,@premium_max,@shows,@clicks,@first_place_clicks,@premium_clicks,@ctr,@first_place_ctr,@premium_ctr,@currency,@Keywords_id,@is_preceded ,@created_at, @updated_at)";
-
-
                 MySqlCommand cmd = new MySqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@min", forecast.Min);
                 cmd.Parameters.AddWithValue("@max", forecast.Max);
@@ -170,14 +162,12 @@ namespace KeywordGetherer
                 cmd.Parameters.AddWithValue("@currency", forecast.Currency);
                 cmd.Parameters.AddWithValue("@Keywords_id", forecast.Keyword_id);
                 cmd.Parameters.AddWithValue("@is_preceded", forecast.is_preceded);
-
                 cmd.Parameters.AddWithValue("@created_at", DateTime.Now);
                 cmd.Parameters.AddWithValue("@updated_at", DateTime.Now);
                 cmd.ExecuteNonQuery();
                 int lastId = (int)cmd.LastInsertedId;
                 this.CloseConnection();
                 return lastId;
-                
             }
             catch (Exception e)
             {
@@ -233,42 +223,48 @@ namespace KeywordGetherer
 
         }
 
-        public List<string> listSites(long offset,int limit)
+        public List<string> listSites(long offset, int limit)
         {
 
             if (!this.OpenConnection())
                 return new List<string>();
 
+            List<string> list_sites = new List<string>();
             //выбирае из бд инфу с определенным смещением, чтоб не нагружать оперативку
             string query = "SELECT * FROM `site`  ORDER BY `site_id` desc LIMIT @limit OFFSET @offset ";
-            List<string> list_sites = new List<string>();
 
-            //Create Command
-            MySqlCommand cmd = new MySqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@limit", limit);
-            cmd.Parameters.AddWithValue("@offset", offset);
-            //Create a data reader and Execute the command
-            MySqlDataReader dataReader = cmd.ExecuteReader();
-
-            if (!dataReader.HasRows)
+            try
             {
-                dataReader.Close();
-                this.CloseConnection();
-                return null;
-            }
-            //Read the data and store them in the list
-            while (dataReader.Read())         
-                list_sites.Add(""+dataReader["site"]);
-            
+                //Create Command
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@limit", limit);
+                cmd.Parameters.AddWithValue("@offset", offset);
+                //Create a data reader and Execute the command
+                MySqlDataReader dataReader = cmd.ExecuteReader();
 
-            dataReader.Close();
+                if (!dataReader.HasRows)
+                {
+                    dataReader.Close();
+                    this.CloseConnection();
+                    return null;
+                }
+                //Read the data and store them in the list
+                while (dataReader.Read())
+                    list_sites.Add("" + dataReader["site"]);
+
+                dataReader.Close();
+            }
+            catch
+            {
+
+            }
             this.CloseConnection();
 
             return list_sites;
         }
         public List<DBKeyword> listKeywords(long offset, int limit)
         {
-          
+
             if (!this.OpenConnection())
                 return new List<DBKeyword>();
 
@@ -276,29 +272,34 @@ namespace KeywordGetherer
             string query = "SELECT `keyword`, `id` FROM `keywords`  ORDER BY `id` asc LIMIT @limit OFFSET @offset ";
             List<DBKeyword> list_kw = new List<DBKeyword>();
 
-            //Create Command
-            MySqlCommand cmd = new MySqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@limit", limit);
-            cmd.Parameters.AddWithValue("@offset", offset);
-            //Create a data reader and Execute the command
-            MySqlDataReader dataReader = cmd.ExecuteReader();
-
-            if (!dataReader.HasRows)
+            try
             {
+                //Create Command
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@limit", limit);
+                cmd.Parameters.AddWithValue("@offset", offset);
+                //Create a data reader and Execute the command
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+
+                if (!dataReader.HasRows)
+                {
+                    dataReader.Close();
+                    this.CloseConnection();
+                    return null;
+                }
+                //Read the data and store them in the list
+                while (dataReader.Read())
+                {
+                    DBKeyword dbkw = new DBKeyword();
+                    dbkw.keyword = "" + dataReader["keyword"];
+                    dbkw.keyword_id = Int32.Parse("" + dataReader["id"]);
+                    list_kw.Add(dbkw);
+                }
+
                 dataReader.Close();
-                this.CloseConnection();
-                return null;
             }
-            //Read the data and store them in the list
-            while (dataReader.Read())
-            {
-                DBKeyword dbkw = new DBKeyword();
-                dbkw.keyword = "" + dataReader["keyword"];
-                dbkw.keyword_id = Int32.Parse("" + dataReader["id"]);
-                list_kw.Add(dbkw);
-            }
+            catch { }
 
-            dataReader.Close();
             this.CloseConnection();
 
             return list_kw;
@@ -312,11 +313,13 @@ namespace KeywordGetherer
 
             string query = "SELECT Count(*) FROM `keywords`";
             long Count = -1;
-
-            MySqlCommand cmd = new MySqlCommand(query, conn);
-            Count = (long)(cmd.ExecuteScalar());
+            try
+            {
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                Count = (long)(cmd.ExecuteScalar());
+            }
+            catch { }
             this.CloseConnection();
-
             return Count;
         }
 
@@ -328,30 +331,34 @@ namespace KeywordGetherer
             //выбирае из бд инфу с определенным смещением, чтоб не нагружать оперативку
             string query = "select t1.*from keywords as t1 where t1.id not in (select t2.Keywords_id from forecastinfo t2) LIMIT @limit OFFSET @offset";
             List<DBKeyword> list_kw = new List<DBKeyword>();
-
-            //Create Command
-            MySqlCommand cmd = new MySqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@limit", limit);
-            cmd.Parameters.AddWithValue("@offset", offset);
-            //Create a data reader and Execute the command
-            MySqlDataReader dataReader = cmd.ExecuteReader();
-
-            if (!dataReader.HasRows)
+            try
             {
+                //Create Command
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@limit", limit);
+                cmd.Parameters.AddWithValue("@offset", offset);
+                //Create a data reader and Execute the command
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+
+                if (!dataReader.HasRows)
+                {
+                    dataReader.Close();
+                    this.CloseConnection();
+                    return null;
+                }
+                //Read the data and store them in the list
+                while (dataReader.Read())
+                {
+                    DBKeyword dbkw = new DBKeyword();
+                    dbkw.keyword = "" + dataReader["keyword"];
+                    dbkw.keyword_id = Int32.Parse("" + dataReader["id"]);
+                    list_kw.Add(dbkw);
+                }
+
                 dataReader.Close();
-                this.CloseConnection();
-                return null;
             }
-            //Read the data and store them in the list
-            while (dataReader.Read())
-            {
-                DBKeyword dbkw = new DBKeyword();
-                dbkw.keyword = "" + dataReader["keyword"];
-                dbkw.keyword_id = Int32.Parse("" + dataReader["id"]);
-                list_kw.Add(dbkw);
-            }
+            catch { }
 
-            dataReader.Close();
             this.CloseConnection();
 
             return list_kw;

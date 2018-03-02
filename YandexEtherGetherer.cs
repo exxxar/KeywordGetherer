@@ -14,6 +14,7 @@ namespace KeywordGetherer
         {
             this.taskLimit = taskLimit;
             this.etherUrl = etherUrl;
+
         }
         public async void execute()
         {
@@ -25,22 +26,34 @@ namespace KeywordGetherer
             {
                 try
                 {
-                    taskList.Add(Task.Run(() => (new YandexEther(this.etherUrl)).parse()));
-                }catch { }
+                    taskList.Add(Task.Run(() =>
+                    {
+                  
+                        (new YandexEther(this.etherUrl)).parse();
+                        
+
+                    }));
+
+                }
+                catch { }
 
                 Console.WriteLine("=====>Добавлена задача!Всего {0} задач", taskList.Count);
                 Thread.Sleep(YandexUtils.rndSleep());
                 if (taskList.Count >= this.taskLimit)
-                {                   
+                {
                     Task.WaitAny(taskList.ToArray());
                     try
-                    {                       
+                    {
                         taskList
                             .Where(t => t.IsCompleted)
                             .ToList()
-                            .ForEach(t => taskList.Remove(t));
+                            .ForEach(t =>
+                            {
+                                taskList.Remove(t);
+                               
+                            });
                     }
-                    catch {  }
+                    catch { }
                 }
 
             }

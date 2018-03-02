@@ -17,7 +17,7 @@ namespace KeywordGetherer
         public decimal ContextPrice { get; set; }
         public decimal FirstPlaceCtr { get; set; }
         public decimal PremiumCtr { get; set; }
-        public int Keyword_id { get; set; }
+        public long Keyword_id { get; set; }
 
         
 

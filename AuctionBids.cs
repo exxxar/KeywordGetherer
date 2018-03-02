@@ -11,7 +11,7 @@ namespace KeywordGetherer
         public string Position { get; set; }
         public float Bid { get; set; }
         public float Price { get; set; }
-        public int forecastInfo_id { get; set; }
+        public long forecastInfo_id { get; set; }
 
         public override string ToString()
         {

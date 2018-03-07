@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Text.RegularExpressions;
 using System.Threading;
+using KeywordGetherer.SiteParser;
 
 namespace KeywordGetherer
 {
-    public class DBConection
+    public class DBConection:DBUtils
     {
         private static Mutex dbMutext = new Mutex();
 
@@ -19,7 +20,7 @@ namespace KeywordGetherer
         public class DBKeyword
         {
             public string keyword { get; set; }
-            public int keyword_id { get; set; }
+            public long keyword_id { get; set; }
         }
         private MySqlConnection conn;
 
@@ -42,12 +43,12 @@ namespace KeywordGetherer
             }
         }
 
-        public int getKeywordId(String keyword)
+        public long getKeywordId(String keyword)
         {
             if (!this.OpenConnection())
                 throw new DBConnectionException();
 
-            int keyword_id = -1;
+            long keyword_id = -1;
             
             try
             {
@@ -62,7 +63,7 @@ namespace KeywordGetherer
 
                 while (dataReader.Read())
                 {
-                    keyword_id = dataReader.GetInt32("id");
+                    keyword_id = dataReader.GetInt64("id");
                 }
 
                 dataReader.Close();
@@ -80,7 +81,7 @@ namespace KeywordGetherer
             if (!this.OpenConnection())
                 throw new DBConnectionException();
 
-            int keyword_id = -1;
+            long keyword_id = -1;
 
             string replacement = "";
             Regex rgx = new Regex("['\"]");
@@ -95,7 +96,7 @@ namespace KeywordGetherer
 
                 while (dataReader.Read())
                 {
-                    keyword_id = dataReader.GetInt32("id");
+                    keyword_id = dataReader.GetInt64("id");
                 }
                 Console.WriteLine("keyword=>" + keyword + " id=>" + (keyword_id == -1 ? "нет в бд" : "" + keyword_id));
                 dataReader.Close();
@@ -134,7 +135,32 @@ namespace KeywordGetherer
             this.CloseConnection();
         }
 
-        public int InsertForecast(Forecastinfo forecast)
+        public void InsertTEST(String keyword)
+        {
+
+            if (!this.OpenConnection())
+                throw new DBConnectionException();
+
+            string replacement = "";
+            Regex rgx = new Regex("['\"]");
+
+            string query = "INSERT INTO `keywords` " +
+                "(`keyword`, `created_at`, `updated_at`) VALUES " +
+                "(@keyword_kw,@created_at,@updated_at)";
+
+            try
+            {
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@keyword_kw", rgx.Replace(keyword, replacement));
+                cmd.Parameters.AddWithValue("@created_at", DateTime.Now);
+                cmd.Parameters.AddWithValue("@updated_at", DateTime.Now);
+                cmd.ExecuteNonQuery();
+            }
+            catch { }
+            this.CloseConnection();
+        }
+
+        public long InsertForecast(Forecastinfo forecast)
         {
             //return;
             if (!this.OpenConnection())
@@ -165,7 +191,7 @@ namespace KeywordGetherer
                 cmd.Parameters.AddWithValue("@created_at", DateTime.Now);
                 cmd.Parameters.AddWithValue("@updated_at", DateTime.Now);
                 cmd.ExecuteNonQuery();
-                int lastId = (int)cmd.LastInsertedId;
+                long lastId = (long)cmd.LastInsertedId;
                 this.CloseConnection();
                 return lastId;
             }
@@ -189,7 +215,7 @@ namespace KeywordGetherer
                     "(`position`,`bid`,`price`,`forecastInfo_id`,`created_at`, `updated_at`) VALUES " +
                     "(@position,@bid,@price,@forecastInfo_id,@created_at, @updated_at)";
 
-                int pos = 0;
+                long pos = 0;
 
 
                 switch (auctionBids.Position.ToUpper())
@@ -292,7 +318,7 @@ namespace KeywordGetherer
                 {
                     DBKeyword dbkw = new DBKeyword();
                     dbkw.keyword = "" + dataReader["keyword"];
-                    dbkw.keyword_id = Int32.Parse("" + dataReader["id"]);
+                    dbkw.keyword_id = Int64.Parse("" + dataReader["id"]);
                     list_kw.Add(dbkw);
                 }
 
@@ -306,6 +332,7 @@ namespace KeywordGetherer
 
         }
 
+     
         public long countKewyrods()
         {
             if (!this.OpenConnection())
@@ -323,7 +350,7 @@ namespace KeywordGetherer
             return Count;
         }
 
-        public List<DBKeyword> wordsForReport(int offset, int limit)
+        public List<DBKeyword> wordsForReport(long offset, int limit)
         {
             if (!this.OpenConnection())
                 return new List<DBKeyword>();
@@ -351,7 +378,7 @@ namespace KeywordGetherer
                 {
                     DBKeyword dbkw = new DBKeyword();
                     dbkw.keyword = "" + dataReader["keyword"];
-                    dbkw.keyword_id = Int32.Parse("" + dataReader["id"]);
+                    dbkw.keyword_id = Int64.Parse("" + dataReader["id"]);
                     list_kw.Add(dbkw);
                 }
 
@@ -409,5 +436,241 @@ namespace KeywordGetherer
             }
 
         }
+
+
+        public Boolean isExist_AdSearchPosition(Keyword keyword)
+        {
+            if (!this.OpenConnection())
+                throw new DBConnectionException();
+
+            Console.WriteLine("Проверяем в бд [" + keyword.toString() + "]");
+
+            long Count = -1;
+
+            try
+            {
+                string replacement = "";
+                Regex rgx = new Regex("['\"]");
+
+                string query = "SELECT Count(*) as count FROM `adsearchpostions` WHERE `Keywords_id`=@Keywords_id and `search_engine`=@search_engine and `positions`=@positions and `description`=\"@description\" and 	`AdSearchPostions_site_id`=@AdSearchPostions_site_id";
+
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@Keywords_id", keyword.keyword_id);
+                cmd.Parameters.AddWithValue("@search_engine", keyword.search_engine);
+                cmd.Parameters.AddWithValue("@positions", keyword.position);
+                cmd.Parameters.AddWithValue("@description", rgx.Replace(keyword.description, replacement));
+                cmd.Parameters.AddWithValue("@AdSearchPostions_site_id", keyword.site_id);
+
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+
+                while (dataReader.Read())
+                {
+                    Count = dataReader.GetInt64("count");
+
+                    //if (dataReader.FieldCount>1) { 
+                    //    Console.WriteLine(dataReader.GetString("position") != null ? "ПОЗИЦИЯ:" + dataReader.GetString("position") : "позиции нет");
+                    //    Console.WriteLine(dataReader.GetString("description") != null ? "ОПИСАНИЕ:" + dataReader.GetString("description") : "описания нет");
+                    // }
+
+
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            this.CloseConnection();
+            Console.WriteLine("Кол-во в БД!![" + Count + "]");
+            return Count > 0;
+        }
+
+        public void Insert_AdSearchPosition(Keyword keyword)
+        {
+
+            if (!this.OpenConnection())
+                throw new DBConnectionException();
+
+            try
+            {
+                string replacement = "";
+                Regex rgx = new Regex("['\"]");
+
+                Console.WriteLine("Добавляем в бд [" + keyword.toString() + "]");
+                string query = "INSERT INTO `adsearchpostions` " +
+                    "(`AdSearchPostions_site_id`, `description`, `positions`, `search_engine`, `Keywords_id`,`created_at`,`updated_at`,`is_ad`,`region_id`) VALUES " +
+                    "(@AdSearchPostions_site_id,@description,@positions,@search_engine,@Keywords_id,@created_at,@updated_at,@is_ad,@region_id)";
+
+
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@AdSearchPostions_site_id", keyword.site_id);
+                cmd.Parameters.AddWithValue("@description", rgx.Replace(keyword.description, replacement));
+                cmd.Parameters.AddWithValue("@positions", keyword.position);
+                cmd.Parameters.AddWithValue("@search_engine", keyword.search_engine);
+                cmd.Parameters.AddWithValue("@Keywords_id", keyword.keyword_id);
+                cmd.Parameters.AddWithValue("@created_at", keyword.created_at);
+                cmd.Parameters.AddWithValue("@updated_at", keyword.updated_at);
+                cmd.Parameters.AddWithValue("@is_ad", keyword.is_ad);
+                cmd.Parameters.AddWithValue("@region_id", keyword.region_id);
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            this.CloseConnection();
+        }
+
+
+
+        public long isUrlExist(String site_url)
+        {
+            if (!this.OpenConnection())
+                return -1;
+
+            long site_id = -1;
+
+            try
+            {
+
+                string query = "SELECT * FROM `site` WHERE `site`=@site_url;";
+
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@site_url", site_url);
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+
+                while (dataReader.Read())
+                {
+                    site_id = dataReader.GetInt64("site_id");
+                }
+
+                dataReader.Close();
+                this.CloseConnection();
+                return site_id;
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            return site_id;
+        }
+
+        public long Insert_Site(String site_url)
+        {
+            if (!this.OpenConnection())
+                return -1;
+
+            Console.WriteLine("Добавляем URL в бд " + site_url);
+            MySqlCommand cmd = null;
+            //create command and assign the query and connection from the constructor
+            try
+            {
+                string query = "INSERT INTO `site` (`site`) VALUES ( @site_url );";
+                cmd = new MySqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@site_url", site_url);
+                cmd.ExecuteNonQuery();
+                
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            this.CloseConnection();
+            return cmd.LastInsertedId;
+        }
+
+        public void Insert_Uri(String site_uri)
+        {
+            if (!this.OpenConnection())
+                return;
+
+            //create command and assign the query and connection from the constructor
+            try
+            {
+                string query = "INSERT INTO `uri` (`uri`,`site_id`) VALUES (@uri,@site_id);";
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@uri", site_uri);
+                cmd.Parameters.AddWithValue("@site_id", site_uri);
+                cmd.ExecuteNonQuery();
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            this.CloseConnection();
+        }
+
+        public long Select_Uri_id(String uri)
+        {
+
+            if (!this.OpenConnection())
+                return -1;
+
+            long uri_id = -1;
+
+            try
+            {
+                //Create Command
+                string query = "SELECT uri_id FROM `uri` WHERE `uri`=@uri";
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@uri", uri);
+
+                //Create a data reader and Execute the command
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+
+                while (dataReader.Read())
+                {
+                    uri_id = dataReader.GetInt64("uri_id");
+                }
+                dataReader.Close();
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            this.CloseConnection();
+
+            return uri_id;
+        }
+
+
+        public long Select_Site_id(String site_url)
+        {
+
+            if (!this.OpenConnection())
+                return -1;
+
+            long site_id = -1;
+
+            try
+            {
+                //Create Command
+                string query = "SELECT site_id FROM `site` WHERE `site`=@site_url";
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@site_url", site_url);
+
+                //Create a data reader and Execute the command
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+
+                while (dataReader.Read())
+                {
+                    site_id = dataReader.GetInt64("site_id");
+                }
+                dataReader.Close();
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            this.CloseConnection();
+
+            return site_id;
+        }
+
+
     }
 }

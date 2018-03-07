@@ -26,8 +26,7 @@ namespace KeywordGetherer
                 Console.WriteLine("Ping {0} / {1}. We are live!",  DateTime.Now.TimeOfDay, TimeSpan.FromTicks(selfRestartTime));
                 if (selfRestartTime <= DateTime.Now.TimeOfDay.Ticks)
                 {                   
-                   Process.Start(Assembly.GetExecutingAssembly().Location, this.argument);
-                    Process.GetCurrentProcess().CloseMainWindow();
+                   Process.Start(Assembly.GetExecutingAssembly().Location, this.argument);                    
                     Process.GetCurrentProcess().Kill();
                 }
 

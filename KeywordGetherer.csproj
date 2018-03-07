@@ -64,21 +64,27 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AuctionBids.cs" />
+    <Compile Include="SiteParser\Keyword.cs" />
+    <Compile Include="SiteParser\Yandex.cs" />
+    <Compile Include="SiteParser\YandexGetherer.cs" />
+    <Compile Include="YandexDirect\AuctionBids.cs" />
     <Compile Include="DBConnection.cs" />
-    <Compile Include="ForecastGetherer.cs" />
-    <Compile Include="Forecastinfo.cs" />
-    <Compile Include="IniFiles.cs" />
-    <Compile Include="KeywordGetherer.cs" />
-    <Compile Include="KeywordsBySiteGetherer.cs" />
+    <Compile Include="Utils\DBUtils.cs" />
+    <Compile Include="YandexDirect\ForecastGetherer.cs" />
+    <Compile Include="YandexDirect\Forecastinfo.cs" />
+    <Compile Include="Utils\IniFiles.cs" />
+    <Compile Include="Keywords\KeywordGetherer.cs" />
+    <Compile Include="Keywords\KeywordsBySiteGetherer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="DriverUtils.cs" />
+    <Compile Include="Utils\DriverUtils.cs" />
     <Compile Include="SelfRestarter.cs" />
-    <Compile Include="YandexDirect.cs" />
-    <Compile Include="YandexEther.cs" />
-    <Compile Include="YandexEtherGetherer.cs" />
-    <Compile Include="YandexUtils.cs" />
+    <Compile Include="Table.cs" />
+    <Compile Include="TestClassTable.cs" />
+    <Compile Include="YandexDirect\YandexDirect.cs" />
+    <Compile Include="Ether\YandexEther.cs" />
+    <Compile Include="Ether\YandexEtherGetherer.cs" />
+    <Compile Include="Utils\YandexUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">
@@ -86,6 +92,7 @@
     </None>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Selenium.Chrome.WebDriver.2.35\build\Selenium.Chrome.WebDriver.targets" Condition="Exists('..\packages\Selenium.Chrome.WebDriver.2.35\build\Selenium.Chrome.WebDriver.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

@@ -1,5 +1,7 @@
 ﻿using KeywordGetherer;
+using KeywordGetherer.Markov;
 using KeywordGetherer.SiteParser;
+using MarkVSharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -15,6 +17,20 @@ namespace KeywordGetherer
 
         static void Main(string[] args)
         {
+            //GeneratorFacade gen = new GeneratorFacade(new MarkovGenerator(System.IO.File.ReadAllText("text.txt")));
+
+            //Console.WriteLine(gen.GenerateParagraphs(4));
+
+
+            GeneratorFacade gen = new GeneratorFacade(new MarkovGenerator(System.IO.File.ReadAllText("data.txt")));
+
+            Console.WriteLine(gen.GenerateParagraphs(10));
+
+            // UrlCrawler uc = new UrlCrawler();
+
+            Console.ReadLine();
+            return;
+
             ThreadPool.SetMaxThreads(10000, 1000);
 
 

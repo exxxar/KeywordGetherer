@@ -234,10 +234,12 @@ namespace KeywordGetherer
             //options.AddArgument("--headless");
             options.AddArgument("--disable-gpu");  //--d
 
+            kwMutext.WaitOne();
             ChromeDriver driver = new ChromeDriver(options);//открываем сам браузер
             driver.LocationContext.PhysicalLocation = new OpenQA.Selenium.Html5.Location(55.751244, 37.618423, 152);
             driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10); //время ожидания компонента страницы после загрузки страницы
             driver.Manage().Cookies.DeleteAllCookies();
+            kwMutext.ReleaseMutex();
 
             driver.Navigate().GoToUrl("http://www.bukvarix.com/keywords/?q=" + kw.keyword + "&r=report");
 

@@ -5,12 +5,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace KeywordGetherer.SiteParser
 {
     class Yandex:DBConection
     {
+        private static Mutex winMutext = new Mutex();
         public String url = "http://yandex.ru";
         public ChromeDriver driver;
         public long regionId = 1;
@@ -24,6 +26,7 @@ namespace KeywordGetherer.SiteParser
             options.AddArgument("--disable-gpu-shader-disk-cache");
             options.AddArgument("--headless");
 
+            winMutext.WaitOne();
             driver = new ChromeDriver(options);//открываем сам браузер
 
             driver.LocationContext.PhysicalLocation = new OpenQA.Selenium.Html5.Location(55.751244, 37.618423, 152);
@@ -31,6 +34,8 @@ namespace KeywordGetherer.SiteParser
             driver.Manage().Window.Maximize();//открываем браузер на полный экран
             driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10); //время ожидания компонента страницы после загрузки страницы
             driver.Manage().Cookies.DeleteAllCookies();
+            winMutext.ReleaseMutex();
+
             driver.Navigate().GoToUrl(this.url);
         }
 

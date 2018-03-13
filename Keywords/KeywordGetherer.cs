@@ -163,7 +163,7 @@ namespace KeywordGetherer
             driver.Close();
             try
             {
-                File.ReadAllLines(fileName)
+                File.ReadLines(fileName)
                     .Skip(1)
                     .ToList()
                     .ForEach(s =>
@@ -209,7 +209,7 @@ namespace KeywordGetherer
                 throw new FileNotFoundException(this.loadFromPath);
 
             List<DBKeyword> list = new List<DBKeyword>();
-            File.ReadAllLines(this.loadFromPath)
+            File.ReadLines(this.loadFromPath)
                 .Skip((int)offset)
                 .Take(limit)
                 .ToList()

@@ -68,8 +68,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Markov\MarkovGen.cs" />
     <Compile Include="Markov\UrlCrawler.cs" />
     <Compile Include="SiteParser\Keyword.cs" />
+    <Compile Include="SiteParser\SiteAndKeywords.cs" />
     <Compile Include="SiteParser\Yandex.cs" />
     <Compile Include="SiteParser\YandexGetherer.cs" />
     <Compile Include="YandexDirect\AuctionBids.cs" />

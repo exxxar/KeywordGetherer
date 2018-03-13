@@ -5,135 +5,204 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace KeywordGetherer.Markov
 {
-    class UrlCrawler
+    class UrlCrawler : DBConection
     {
-        public string SiteUrl = @"http://greenfinance.ru";
-        List<String> urlsInSite = new List<string>();
+        const string SETTINGS_SECTION = "url_crawler";
+        protected string working_dir = "markov_data";
+
+        private static Mutex siteMutext = new Mutex();
+
+        protected IniFiles settings;
+
+        public int limit;
+        public long offset;
+
         public UrlCrawler()
         {
-            urlsInSite.Add(SiteUrl);
+            this.init();
 
-            int index = 0;
-            if (!File.Exists("data.txt"))
-                File.Create("data.txt");
+        }
 
-            while(index<urlsInSite.Count)
+        public async void execute()
+        {
+            if (!Directory.Exists(working_dir))
+                Directory.CreateDirectory(working_dir);
+
+            while (true)
             {
+                siteMutext.WaitOne();
 
-                string localUrl = urlsInSite.ToArray()[index];
-                Console.WriteLine("Берем [{0}] url", localUrl);
-                ///System.Threading.Thread.Sleep(5000);
-                WebRequest webr = null;
-                HttpWebResponse resp = null;
+                this.offset = !settings.KeyExists("offset", SETTINGS_SECTION) ?
+                    long.Parse(settings.Write("offset", "" + offset, SETTINGS_SECTION)) :
+                    long.Parse(settings.Read("offset", SETTINGS_SECTION));
 
-                
+                this.offset += this.limit;
+                settings.Write("offset", "" + this.offset, SETTINGS_SECTION);
 
-                try
-                {
-                    webr = WebRequest.Create(localUrl);
-                    resp = (HttpWebResponse)webr.GetResponse();
-                }
-                catch(NotSupportedException nse)
-                {
-                    index++;
-                    continue;
-                }
-                catch(UriFormatException ue)
-                {
-                    index++;
-                    continue;
-                }
-                catch (WebException e)
-                {
-                    resp = (HttpWebResponse)e.Response;
-                  
-                }
+                siteMutext.ReleaseMutex();
 
-                if (resp == null)
-                {
-                    
-                    index++;
-                    continue;
-                }
-                Stream stream = resp.GetResponseStream();
-                
-                StreamReader sr = new StreamReader(stream, Encoding.GetEncoding(resp.CharacterSet));
+                this.listSites(this.offset, this.limit)
+                    .ToList().ForEach(link =>
+                    {
+                        string path_link = link.Replace("/", "_");
+                        string SiteUrl = @"http://" + link;
+                        
 
-
-                string sReadData = sr.ReadToEnd()
-                    .Replace("\n", String.Empty)
-                    .Replace("\t", String.Empty);
-
-              
-
-
-                //   Console.WriteLine(sReadData);
-
-                switch (resp.StatusCode)
-                {
-                    case HttpStatusCode.OK:        //HTTP 200 - всё ОК
-                                                   //
-
-                        Regex reg = new Regex("<a href=\"([^\"]*)\">");
-                        MatchCollection mc = reg.Matches(sReadData);
-                        foreach (Match m in mc)
+                        if (!File.Exists(working_dir + "/data[" + path_link + "].txt"))
                         {
-                            string rez = m.Groups[1].Value.ToLower();
+                            Console.WriteLine("FILE LINK=>" + path_link);
+                            File.Create(working_dir + "/data[" + path_link + "].txt");
+                        }
 
-                            Regex reg_img = new Regex("(jpg|png|gif|bmp|pdf|jpeg|doc|docx)");
+                        List<String> urlsInSite = new List<string>();
 
-                            //
-                            if (!Array.Exists(urlsInSite.ToArray(), element => element == (rez.IndexOf("http") == -1 ? SiteUrl + rez : rez)) && reg_img.Matches(rez).Count == 0)
+                        urlsInSite.Add(SiteUrl);
+
+                        int index = 0;
+                        
+
+                        while (index < urlsInSite.Count)
+                        {
+
+                            string localUrl = urlsInSite.ToArray()[index];
+                            Console.WriteLine("Берем [{0}] url", localUrl);
+                            ///System.Threading.Thread.Sleep(5000);
+                            WebRequest webr = null;
+                            HttpWebResponse resp = null;
+
+                            try
+                            {
+                                webr = WebRequest.Create(localUrl);
+                                resp = (HttpWebResponse)webr.GetResponse();
+                            }
+                            catch (NotSupportedException nse)
+                            {
+                                index++;
+                                continue;
+                            }
+                            catch (UriFormatException ue)
+                            {
+                                index++;
+                                continue;
+                            }
+                            catch (WebException e)
+                            {
+                                resp = (HttpWebResponse)e.Response;
+
+                            }
+
+                            if (resp == null)
                             {
 
-                                urlsInSite.Add(rez.IndexOf("http") == -1 ? SiteUrl + rez : rez);
-                                Console.WriteLine(rez.IndexOf("http") == -1 ? SiteUrl + rez : rez);
+                                index++;
+                                continue;
                             }
+                            Stream stream = resp.GetResponseStream();
+
+                            StreamReader sr = null;
+                            try
+                            {
+                                sr = new StreamReader(stream, Encoding.GetEncoding(resp.CharacterSet));
+                            }catch {
+                                index++;
+                                continue;
+                            }
+
+                            string sReadData = sr.ReadToEnd()
+                                .Replace("\n", String.Empty)
+                                .Replace("\t", String.Empty);
+
+                            switch (resp.StatusCode)
+                            {
+                                case HttpStatusCode.OK:        //HTTP 200 - всё ОК
+                                                               //
+
+                                    Regex reg = new Regex("<a href=\"([^\"]*)\">");
+                                    MatchCollection mc = reg.Matches(sReadData);
+                                    foreach (Match m in mc)
+                                    {
+                                        string rez = m.Groups[1].Value.ToLower();
+
+                                        Regex reg_img = new Regex("(jpg|png|gif|bmp|pdf|jpeg|doc|docx|rar|zip)");
+
+
+
+                                        if (!Array.Exists(urlsInSite.ToArray(), element => element == (rez.IndexOf("http") == -1 ? SiteUrl + rez : rez))
+                                            && reg_img.Matches(rez).Count == 0
+
+                                            )
+                                        {
+
+                                            urlsInSite.Add(rez.IndexOf("http") == -1 ? SiteUrl + rez : rez);
+                                            Console.WriteLine(rez.IndexOf("http") == -1 ? SiteUrl + rez : rez);
+                                        }
+                                    }
+
+                                    reg = new Regex(@"<p[^>]*>\s*(.*?)\s*<\/p>");
+                                    mc = reg.Matches(sReadData);
+                                    StringBuilder stb = new StringBuilder();
+                                    foreach (Match m in mc)
+                                    {
+                                        string rez = Regex
+                                            .Replace(m.Groups[1].Value, "<[^>]+>", string.Empty);
+
+                                        stb.Append(WebUtility.HtmlDecode(rez));
+                                    }
+
+                                    siteMutext.WaitOne();
+                                    try
+                                    {
+
+                                        using (StreamWriter sw = File.AppendText(working_dir + "/data[" + path_link + "].txt"))
+                                        {
+
+                                            sw.WriteLine(stb.ToString());
+                                            sw.Flush();
+                                            sw.Close();
+                                        }
+                                    }
+                                    catch
+                                    {
+
+                                    }
+
+                                    siteMutext.ReleaseMutex();
+                                    break;
+
+                                case HttpStatusCode.Forbidden: //HTTP 403 - доступ запрещён
+                                    break;
+                                case HttpStatusCode.NotFound:  //HTTP 404 - документ не найден
+                                    break;
+                                case HttpStatusCode.Moved:     //HTTP 301 - документ перемещён
+                                    break;
+                                default:                       //другие ошибки
+                                    break;
+                            }
+                            index++;
                         }
-
-                        reg = new Regex(@"<p[^>]*>\s*(.*?)\s*<\/p>");
-                        mc = reg.Matches(sReadData);
-                        StringBuilder stb = new StringBuilder();
-                        foreach (Match m in mc)
-                        {
-                            string rez = Regex
-                                .Replace(m.Groups[1].Value, "<[^>]+>", string.Empty);
-                           
-                            stb.Append(WebUtility.HtmlDecode(rez));
-                        }
-
-
-                        using (StreamWriter sw = File.AppendText("data.txt"))
-                        {
-                            
-                            sw.WriteLine(stb.ToString());
-                            sw.Flush();
-                            sw.Close();
-                        }
-                        break;
-
-                            
-                    case HttpStatusCode.Forbidden: //HTTP 403 - доступ запрещён
-                        break;
-                    case HttpStatusCode.NotFound:  //HTTP 404 - документ не найден
-                        break;
-                    case HttpStatusCode.Moved:     //HTTP 301 - документ перемещён
-                        break;
-                    default:                       //другие ошибки
-                        break;
-                }
-                index++;
+                    });
             }
+        }
 
-            GeneratorFacade gen = new GeneratorFacade(new MarkovGenerator(System.IO.File.ReadAllText("data.txt")));
+        private void init(int step = 5)
+        {
+            this.offset = 0;
+            this.limit = step;
 
-            Console.WriteLine(gen.GenerateParagraphs(4));
+            settings = new IniFiles(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/Settings.ini");
+
+            this.limit = !settings.KeyExists("limit", SETTINGS_SECTION) ?
+               Int32.Parse(settings.Write("limit", "" + this.limit, SETTINGS_SECTION)) :
+               Int32.Parse(settings.Read("limit", SETTINGS_SECTION));
+
         }
     }
 }

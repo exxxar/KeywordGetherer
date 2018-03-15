@@ -16,11 +16,8 @@ namespace KeywordGetherer
 {
     class Program
     {
-        const int THREAD_COUNT = 5;
-
         static void Main(string[] args)
         {
-
             Type t = typeof(SystemController);
             MethodInfo[] attrs = t.GetMethods();
             bool findeMethod = false;
@@ -46,11 +43,12 @@ namespace KeywordGetherer
                     {
                         try
                         {
+
                             List<object> obj = new List<object>();
-                            string[] buf = new string[args.Length > 0 ? args.Length - 1 : 0];
+                            string[] buf = new string[args.Length > 0 ? args.Length-1  : 0];
                             if (args.Length > 1)
                             {
-                                Array.Copy(args, 1, buf, 0, args.Length - 1);
+                                Array.Copy(args, 1, buf, 0, args.Length-1 );
                                 obj.AddRange(buf);
                             }
                             findeMethod = true;

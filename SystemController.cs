@@ -36,7 +36,7 @@ namespace KeywordGetherer
             {
                 taskList.Add(Task.Run(() => (new YandexGetherer()).execute()));
 
-                if (taskList.Count >= (long)theradsCount)
+                if (taskList.Count >= int.Parse((string)theradsCount))
                 {
                     Task.WaitAll(taskList.ToArray());
                     taskList.Clear();
@@ -72,7 +72,7 @@ namespace KeywordGetherer
             {
                 taskList.Add(Task.Run(() => (new SiteAndKeywords((string)path)).execute()));
 
-                if (taskList.Count >= (long)theradsCount)
+                if (taskList.Count >= int.Parse((string)theradsCount))
                 {
                     Task.WaitAll(taskList.ToArray());
                     taskList.Clear();
@@ -91,7 +91,7 @@ namespace KeywordGetherer
             {
                 taskList.Add(Task.Run(() => (new UrlCrawler()).execute()));
 
-                if (taskList.Count >= (long)theradsCount)
+                if (taskList.Count >= int.Parse((string)theradsCount))
                 {
                     Task.WaitAll(taskList.ToArray());
                     taskList.Clear();
@@ -102,16 +102,17 @@ namespace KeywordGetherer
 
         [Help("Запуск генерации слов цепями Маркова 3 параметра: тип, размерность, путь к файлу-словарю")]
         [Executeble("markov")]
-        public void executeMarkov(object type, object size, object path)
+        public void executeMarkov(object type, object size, string path)
         {
+            Console.WriteLine("type={0} size={1} path={2}", type, size, path);
             string buf = "";
             switch ((String)type)
             {
                 default:
-                case "p": buf = (new MarkovGen((string)path)).paragrpaph((int)size); break;
-                case "s": buf = (new MarkovGen((string)path)).sentence((int)size); break;
-                case "w": buf = (new MarkovGen((string)path)).words((int)size); break;
-                case "t": buf = (new MarkovGen((string)path)).title((int)size); break;
+                case "p": buf = (new MarkovGen(path)).paragrpaph(int.Parse((string)size)); break;
+                case "s": buf = (new MarkovGen(path)).sentence(int.Parse((string)size)); break;
+                case "w": buf = (new MarkovGen(path)).words(int.Parse((string)size)); break;
+                case "t": buf = (new MarkovGen(path)).title(int.Parse((string)size)); break;
             }
             Console.WriteLine(buf);
         }
@@ -120,7 +121,7 @@ namespace KeywordGetherer
         [Executeble("usage")]
         public void executeUsage()
         {
-            Console.WriteLine("usage");
+            Console.WriteLine("Usage:");
 
             Type t = this.GetType();
             MethodInfo[] attrs = t.GetMethods();
@@ -134,13 +135,19 @@ namespace KeywordGetherer
                     ExecutebleAttribute ea = (ExecutebleAttribute)Attribute.GetCustomAttribute(m, typeof(ExecutebleAttribute));
 
                     if (ha != null && ea != null
-                        && buf.ToString().IndexOf(String.Format("Method [{0}]=>{1} \n", ea.command, ha.usage)) == -1)
-                        buf.AppendFormat("Method [{0}]=>{1} \n", ea.command, ha.usage);
+                        && buf.ToString().IndexOf(ea.command) == -1)
+                    {
+                        StringBuilder param = new StringBuilder();
+                        buf.Append(ea.command);
+                        for (int i = 0; i < m.GetParameters().Length; i++)
+                            param.AppendFormat(i != m.GetParameters().Length - 1 ? "{0}," : "{0}", m.GetParameters()[i].Name);
 
-
+                        Console.WriteLine("Методы [{0}]=>{1}", ea.command, ha.usage);
+                        Console.WriteLine("Параметров=>{0} {1} \n", m.GetParameters().Length, param.ToString());
+                    }
                 }
             }
-            Console.WriteLine(buf.ToString());
+
         }
     }
 }

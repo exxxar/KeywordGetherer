@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Security.AccessControl;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -28,11 +29,11 @@ namespace KeywordGetherer.Markov
         public UrlCrawler()
         {
             this.init();
-
         }
 
         public async void execute()
         {
+            this.working_dir = System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)+"/"+ this.working_dir;
             if (!Directory.Exists(working_dir))
                 Directory.CreateDirectory(working_dir);
 
@@ -52,16 +53,10 @@ namespace KeywordGetherer.Markov
                 this.listSites(this.offset, this.limit)
                     .ToList().ForEach(link =>
                     {
+                        FileStream file = null;
                         string path_link = link.Replace("/", "_");
                         string SiteUrl = @"http://" + link;
-                        
-
-                        if (!File.Exists(working_dir + "/data[" + path_link + "].txt"))
-                        {
-                            Console.WriteLine("FILE LINK=>" + path_link);
-                            File.Create(working_dir + "/data[" + path_link + "].txt");
-                        }
-
+    
                         List<String> urlsInSite = new List<string>();
 
                         urlsInSite.Add(SiteUrl);
@@ -135,8 +130,10 @@ namespace KeywordGetherer.Markov
 
 
 
-                                        if (!Array.Exists(urlsInSite.ToArray(), element => element == (rez.IndexOf("http") == -1 ? SiteUrl + rez : rez))
+                                        rez = rez.IndexOf(SiteUrl) != -1 ? rez : SiteUrl + rez;
+                                        if (!Array.Exists(urlsInSite.ToArray(), element => element == rez)
                                             && reg_img.Matches(rez).Count == 0
+                                            && rez.IndexOf(SiteUrl) != -1
 
                                             )
                                         {
@@ -154,27 +151,13 @@ namespace KeywordGetherer.Markov
                                         string rez = Regex
                                             .Replace(m.Groups[1].Value, "<[^>]+>", string.Empty);
 
-                                        stb.Append(WebUtility.HtmlDecode(rez));
-                                    }
+                                        siteMutext.WaitOne();
+                                         File.AppendAllText(working_dir + "/data[" + path_link + "].txt", WebUtility.HtmlDecode(rez));
+                                     
+                                        siteMutext.ReleaseMutex();
 
-                                    siteMutext.WaitOne();
-                                    try
-                                    {
-
-                                        using (StreamWriter sw = File.AppendText(working_dir + "/data[" + path_link + "].txt"))
-                                        {
-
-                                            sw.WriteLine(stb.ToString());
-                                            sw.Flush();
-                                            sw.Close();
-                                        }
-                                    }
-                                    catch
-                                    {
-
-                                    }
-
-                                    siteMutext.ReleaseMutex();
+                                    }                                                                   
+                                   
                                     break;
 
                                 case HttpStatusCode.Forbidden: //HTTP 403 - доступ запрещён

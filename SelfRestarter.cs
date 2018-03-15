@@ -34,10 +34,10 @@ namespace KeywordGetherer
                 int io = 0;
                 ThreadPool.GetAvailableThreads(out worker, out io);
 
-                Console.WriteLine("Thread pool threads available at startup: ");
-                Console.WriteLine("   Worker threads: {0:N0}", worker);
-                Console.WriteLine("   Asynchronous I/O threads: {0:N0}", io);
-                Console.WriteLine("   Count threads: {0}", Process.GetCurrentProcess().Threads.Count);
+                //Console.WriteLine("Thread pool threads available at startup: ");
+                //Console.WriteLine("   Worker threads: {0:N0}", worker);
+                //Console.WriteLine("   Asynchronous I/O threads: {0:N0}", io);
+                //Console.WriteLine("   Count threads: {0}", Process.GetCurrentProcess().Threads.Count);
 
                 Thread.Sleep(1000);
                                 

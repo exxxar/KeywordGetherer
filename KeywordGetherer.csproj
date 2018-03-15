@@ -68,12 +68,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExecutebleAttribute.cs" />
+    <Compile Include="HelpAttribute.cs" />
     <Compile Include="Markov\MarkovGen.cs" />
     <Compile Include="Markov\UrlCrawler.cs" />
     <Compile Include="SiteParser\Keyword.cs" />
     <Compile Include="SiteParser\SiteAndKeywords.cs" />
     <Compile Include="SiteParser\Yandex.cs" />
     <Compile Include="SiteParser\YandexGetherer.cs" />
+    <Compile Include="SystemController.cs" />
     <Compile Include="YandexDirect\AuctionBids.cs" />
     <Compile Include="DBConnection.cs" />
     <Compile Include="Utils\DBUtils.cs" />

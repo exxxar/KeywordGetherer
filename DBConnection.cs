@@ -110,6 +110,38 @@ namespace KeywordGetherer
 
 
         }
+
+        public Dictionary<string,long> getTablesCountInfo()
+        {
+            if (!this.OpenConnection())
+                throw new DBConnectionException();            
+
+           string query = "SELECT table_name, table_rows FROM information_schema.tables where table_schema = 'keywords'; ";
+            Dictionary<string, long> buf = new Dictionary<string, long>();
+            try
+            {
+                //Create Command
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                //Create a data reader and Execute the command
+                MySqlDataReader dataReader = cmd.ExecuteReader();
+
+                if (!dataReader.HasRows)
+                {
+                    dataReader.Close();
+                    this.CloseConnection();
+                    return null;
+                }
+                //Read the data and store them in the list
+                while(dataReader.Read())
+                    buf.Add(""+dataReader["table_name"],Int64.Parse("" + dataReader["table_rows"]));                
+
+                dataReader.Close();
+            }
+            catch { }
+            this.CloseConnection();
+
+            return buf;
+        }
         public void Insert(String keyword)
         {
 

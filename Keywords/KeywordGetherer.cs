@@ -90,9 +90,23 @@ namespace KeywordGetherer
             while (true)
             {
                 kwMutext.WaitOne();
+                var globalOffset = this.offset;
+                if (loadFromFile)
+                    globalOffset = !settings.KeyExists("file_offset", SETTINGS_SECTION) ?
+                        long.Parse(settings.Write("file_offset", "" + file_offset, SETTINGS_SECTION)) :
+                        long.Parse(settings.Read("file_offset", SETTINGS_SECTION));
+                else
+                    globalOffset = !settings.KeyExists("offset", SETTINGS_SECTION) ?
+                       long.Parse(settings.Write("offset", "" + offset, SETTINGS_SECTION)) :
+                       long.Parse(settings.Read("offset", SETTINGS_SECTION));
+
+                this.offset = Math.Max(globalOffset, this.offset);
+
                 this.limit = (STEP - Math.Min(taskList.Count, STEP));
                 this.offset += (STEP - Math.Min(taskList.Count, STEP));
-                settings.Write(this.loadFromFile ? "file_offset" : "offset", "" + this.offset, SETTINGS_SECTION);
+               
+
+                settings.Write(this.loadFromFile ? "file_offset" : "offset", "" +this.offset, SETTINGS_SECTION);
 
                 List<DBKeyword> list = loadFromFile ? loadFile(offset, limit) : this.listKeywords(offset, limit);
                 if (list == null)
@@ -125,7 +139,9 @@ namespace KeywordGetherer
                            
                         });
                 }
-                catch { }
+                catch {
+                  
+                }
 
 
 

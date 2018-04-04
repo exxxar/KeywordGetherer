@@ -28,14 +28,12 @@ namespace KeywordGetherer
                 {
                     taskList.Add(Task.Run(() =>
                     {
-                  
                         (new YandexEther(this.etherUrl)).parse();
-                        
-
-                    }));
-
+                   }));
                 }
-                catch { }
+                catch {
+                    Task.Run(() => (new SelfRestarter(TimeSpan.FromSeconds(25))).execute());
+                }
 
                 Console.WriteLine("=====>Добавлена задача!Всего {0} задач", taskList.Count);
                 Thread.Sleep(YandexUtils.rndSleep());
@@ -53,7 +51,9 @@ namespace KeywordGetherer
                                
                             });
                     }
-                    catch { }
+                    catch {
+                        Task.Run(() => (new SelfRestarter(TimeSpan.FromSeconds(25))).execute());
+                    }
                 }
 
             }

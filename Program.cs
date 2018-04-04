@@ -16,8 +16,12 @@ namespace KeywordGetherer
 {
     class Program
     {
+        public static string arguments = "";
+
         static void Main(string[] args)
         {
+            arguments = String.Join(" ", args);
+
             Type t = typeof(SystemController);
             MethodInfo[] attrs = t.GetMethods();
             bool findeMethod = false;
@@ -72,10 +76,9 @@ namespace KeywordGetherer
             if (!findeMethod)
                 Console.WriteLine("Метод не найден! Попробуйте usage");
 
-
             ThreadPool.SetMaxThreads(10000, 1000);
 
-            Task.Run(() => (new SelfRestarter(TimeSpan.FromHours(5), String.Join(" ", args))).execute());
+            Task.Run(() => (new SelfRestarter(TimeSpan.FromHours(25))).execute());
             Console.ReadLine();
         }
     }

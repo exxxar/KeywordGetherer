@@ -41,11 +41,14 @@ namespace KeywordGetherer.Markov
             {
                 siteMutext.WaitOne();
 
-                this.offset = !settings.KeyExists("offset", SETTINGS_SECTION) ?
+                var globalOffset = !settings.KeyExists("offset", SETTINGS_SECTION) ?
                     long.Parse(settings.Write("offset", "" + offset, SETTINGS_SECTION)) :
                     long.Parse(settings.Read("offset", SETTINGS_SECTION));
 
+                this.offset = Math.Max(this.offset, globalOffset);
+                
                 this.offset += this.limit;
+                
                 settings.Write("offset", "" + this.offset, SETTINGS_SECTION);
 
                 siteMutext.ReleaseMutex();
@@ -78,25 +81,15 @@ namespace KeywordGetherer.Markov
                                 webr = WebRequest.Create(localUrl);
                                 resp = (HttpWebResponse)webr.GetResponse();
                             }
-                            catch (NotSupportedException nse)
+                            catch (Exception ex)
                             {
                                 index++;
                                 continue;
                             }
-                            catch (UriFormatException ue)
-                            {
-                                index++;
-                                continue;
-                            }
-                            catch (WebException e)
-                            {
-                                resp = (HttpWebResponse)e.Response;
-
-                            }
+                                                      
 
                             if (resp == null)
                             {
-
                                 index++;
                                 continue;
                             }

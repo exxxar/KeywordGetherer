@@ -29,7 +29,7 @@ namespace KeywordGetherer
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Task.Run(() => (new SelfRestarter(TimeSpan.FromSeconds(25))).execute());
             }
         }
 
@@ -41,7 +41,7 @@ namespace KeywordGetherer
             }
             catch (Exception e)
             {
-                Console.WriteLine("МЫ ТУТ УПАЛИ!" + e.Message);
+                Task.Run(() => (new SelfRestarter(TimeSpan.FromSeconds(25))).execute());
             }
         }
 
@@ -131,10 +131,7 @@ namespace KeywordGetherer
             }
             catch (Exception e)
             {
-                Task.Run(()=> {
-                    this.execute(keywords);
-                   
-                });
+                Task.Run(() => (new SelfRestarter(TimeSpan.FromSeconds(25))).execute());
             }
 
         }

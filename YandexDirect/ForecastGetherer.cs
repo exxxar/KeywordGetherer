@@ -42,10 +42,11 @@ namespace KeywordGetherer
                         while (true)
                         {
                             forecastMutext.WaitOne();
-                            this.forecastOffset = !settings.KeyExists("offset", SETTINGS_SECTION) ?
+                            var globalOffset = !settings.KeyExists("offset", SETTINGS_SECTION) ?
                                         Int64.Parse(settings.Write("offset", "0", SETTINGS_SECTION)) :
                                         Int64.Parse(settings.Read("offset", SETTINGS_SECTION));
 
+                            this.forecastOffset = Math.Max(this.forecastOffset, globalOffset);
                             Console.WriteLine("Take date from {0} pos to {1}", this.forecastOffset, this.forecastOffset + LIMIT);
 
 
@@ -55,8 +56,9 @@ namespace KeywordGetherer
                                 break;
 
                             this.forecastOffset += LIMIT;
+                            globalOffset += LIMIT;
 
-                            settings.Write("offset", "" + this.forecastOffset, SETTINGS_SECTION);
+                            settings.Write("offset", "" + Math.Max(this.forecastOffset,globalOffset), SETTINGS_SECTION);
                             forecastMutext.ReleaseMutex();
 
                             tempList

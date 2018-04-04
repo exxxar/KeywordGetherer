@@ -9,18 +9,26 @@ using System.Threading.Tasks;
 
 namespace KeywordGetherer
 {
-    public class SelfRestarter
+    public class SelfRestarter:DBConection
     {
         private long selfRestartTime;
         private string argument;
-        public SelfRestarter(TimeSpan restartIntervalTime,String argument)
+
+        public SelfRestarter(TimeSpan restartIntervalTime)
         {        
             this.selfRestartTime = DateTime.Now.TimeOfDay.Ticks+restartIntervalTime.Ticks;
-            this.argument = argument;       
+            this.argument = Program.arguments;
         }
 
         public async void execute()
         {
+            Dictionary<string, long> counts_delta= null;
+            long deltaTime = DateTime.Now.TimeOfDay.Ticks + TimeSpan.FromMinutes(5).Ticks;
+            try
+            {
+                counts_delta = getTablesCountInfo();
+            } catch {
+            }
             while (true)
             {
                 Console.WriteLine("Ping {0} / {1}. We are live!",  DateTime.Now.TimeOfDay, TimeSpan.FromTicks(selfRestartTime));
@@ -29,6 +37,30 @@ namespace KeywordGetherer
                    Process.Start(Assembly.GetExecutingAssembly().Location, this.argument);                    
                     Process.GetCurrentProcess().Kill();
                 }
+
+                try
+                {
+                    if (counts_delta["forecastinfo"] == getTablesCountInfo()["forecastinfo"]
+                        && counts_delta["keywords"] == getTablesCountInfo()["keywords"]
+                        && deltaTime <= DateTime.Now.TimeOfDay.Ticks
+                        )
+                    {
+                        Console.WriteLine("Мы давно наблюдали обновления БД! Возможно у нас что-то пошло не так!");
+                        Process.Start(Assembly.GetExecutingAssembly().Location, this.argument);
+                        Process.GetCurrentProcess().Kill();
+                    }
+                }
+                catch { }
+
+                try
+                {
+                    if (counts_delta["forecastinfo"] != getTablesCountInfo()["forecastinfo"]
+                       || counts_delta["keywords"] != getTablesCountInfo()["keywords"])
+                    {
+                        deltaTime = DateTime.Now.TimeOfDay.Ticks + TimeSpan.FromMinutes(5).Ticks;
+                        counts_delta = getTablesCountInfo();
+                    }
+                }catch { }
 
                 int worker = 0;
                 int io = 0;

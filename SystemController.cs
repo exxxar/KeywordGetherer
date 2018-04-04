@@ -57,9 +57,7 @@ namespace KeywordGetherer
         {
             Task.Run(() =>
             {
-
                 (new YandexEtherGetherer((int)theradsCount)).execute();
-
             });
         }
 
@@ -82,7 +80,7 @@ namespace KeywordGetherer
         }
 
 
-        [Help("Запуск сборщика текстов по сайтам из базы, 1 параметр: кол-во потокв ")]
+        [Help("Запуск сборщика текстов по сайтам из базы ")]
         [Executeble("crawler")]
         public void executeCrawler(object theradsCount)
         {

@@ -68,8 +68,18 @@ namespace KeywordGetherer
             while (true)
             {
                 kwsiteMutext.WaitOne();
+               var globalOffset = !settings.KeyExists("offsetSite") ?
+                    Int32.Parse(settings.Write("offsetSite", "0")) :
+                    Int32.Parse(settings.Read("offsetSite"));
+
+                this.offsetSite = Math.Max(this.offsetSite, globalOffset);
+
                 this.limitSite = (STEP - Math.Min(taskList.Count, STEP));
                 this.offsetSite += (STEP - Math.Min(taskList.Count, STEP));
+                globalOffset += this.limitSite;
+
+
+
                 settings.Write("offsetSite", "" + this.offsetSite);
 
                 List<String> list = this.listSites(offsetSite, limitSite);
@@ -153,6 +163,7 @@ namespace KeywordGetherer
             catch (Exception e)
             {
                 Console.WriteLine("Мы тут упали:" + e.Message);
+                Task.Run(() => (new SelfRestarter(TimeSpan.FromSeconds(25))).execute());
             }
             File.Delete(fileName);
 

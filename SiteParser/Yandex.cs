@@ -165,7 +165,7 @@ namespace KeywordGetherer.SiteParser
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    Task.Run(() => (new SelfRestarter(TimeSpan.FromSeconds(25))).execute());
                 }
 
             }

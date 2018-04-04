@@ -54,12 +54,15 @@ namespace KeywordGetherer.SiteParser
                 while (true)
                 {
                     kwMutext.WaitOne();
+                    var globalOffset = !settings.KeyExists("offset", SETTINGS_SECTION) ?
+                        long.Parse(settings.Write("offset", "" + offset, SETTINGS_SECTION)) :
+                        long.Parse(settings.Read("offset", SETTINGS_SECTION));
+
+                    this.offset = Math.Max(this.offset, globalOffset);
 
                     this.offset += this.limit;
-                    settings.Write("offset", "" + this.offset, SETTINGS_SECTION);
-
-                    kwMutext.ReleaseMutex();
-
+                  
+                   
                     this.loadFile(this.offset, this.limit)
                         .ToList()
                         .ForEach(item =>
@@ -71,7 +74,7 @@ namespace KeywordGetherer.SiteParser
                         string keyword = buf[1].Replace("\"", "");
                       //  Console.WriteLine("url=>[{0}] keyword=>[{1}]", url, keyword);
 
-                        kwMutext.WaitOne();
+                       
                         if (!url.Equals(oldUrl))
                         {
                             oldUrl = url;
@@ -82,13 +85,15 @@ namespace KeywordGetherer.SiteParser
                         if (keyword.IndexOf("?") == -1)
                             if (!this.isKeywordExist(keyword))
                                 this.Insert(keyword);
-                        kwMutext.ReleaseMutex();
+                       
                     });
+                    settings.Write("offset", "" + this.offset, SETTINGS_SECTION);
+                    kwMutext.ReleaseMutex();
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine("Мы тут упали:" + e.Message);
+                Task.Run(() => (new SelfRestarter(TimeSpan.FromSeconds(25))).execute());
             }
 
         }

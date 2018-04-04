@@ -58,13 +58,16 @@ namespace KeywordGetherer.SiteParser
                 {
                     kwMutext.WaitOne();
 
-                    this.offset = !settings.KeyExists("offset", SETTINGS_SECTION) ?
+                    var globalOffset = !settings.KeyExists("offset", SETTINGS_SECTION) ?
                         long.Parse(settings.Write("offset", "" + offset, SETTINGS_SECTION)) :
                         long.Parse(settings.Read("offset", SETTINGS_SECTION));
 
+                    this.offset = Math.Max(this.offset, globalOffset);
+
                     this.limit = STEP;
                     this.offset += this.limit;
-                    settings.Write("offset", "" + this.offset, SETTINGS_SECTION);
+                    globalOffset += this.limit;
+                    settings.Write("offset", "" + Math.Max(this.offset,globalOffset), SETTINGS_SECTION);
 
                     List<DBKeyword> list = this.listKeywords(offset, limit);
                     if (list == null)
@@ -82,7 +85,9 @@ namespace KeywordGetherer.SiteParser
                     }
 
                 }
-            }catch { }
+            }catch {
+                Task.Run(() => (new SelfRestarter(TimeSpan.FromSeconds(25))).execute());
+            }
             yandex.exit();
         }
     }
